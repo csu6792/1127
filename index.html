@@ -149,6 +149,15 @@
     font-weight:900;font-size:12px;padding:4px 10px;border-radius:999px;
     margin-bottom:8px;letter-spacing:.04em;
   }
+  .top5{background:rgba(0,0,0,.3);border:2px solid var(--line);border-radius:18px;padding:12px 14px;margin:12px 0}
+  .top5 h3{margin:0 0 8px;font-size:17px}
+  .top5-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.08);font-weight:900}
+  .top5-row .rk{width:28px;text-align:center;font-size:18px}
+  .top5-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .top5-row .pt{font-variant-numeric:tabular-nums}
+  .top5-row .gain{color:#7dff8a;font-size:13px;margin-left:6px}
+  .top5-row.r1{background:rgba(255,213,79,.28)}.top5-row.r2{background:rgba(224,230,239,.2)}.top5-row.r3{background:rgba(255,171,123,.2)}
+  .reading-note{text-align:center;font-weight:900;font-size:clamp(16px,3vw,22px);margin:10px 0;color:#ffe066}
   #resultTitle{font-size:clamp(22px,4vw,34px);text-align:center}
   #phase-result .opt{cursor:default}
 
@@ -255,6 +264,7 @@
       <div class="row" style="margin:12px 0">
         <label>座號 1～<input type="number" id="seatMax" value="50" min="1" max="50" style="width:70px"></label>
         <label>答題秒數 <input type="number" id="qSeconds" value="15" min="5" max="60" style="width:70px"></label>
+        <label>讀題秒數 <input type="number" id="readSeconds" value="5" min="0" max="30" style="width:70px"></label>
       </div>
       <div class="row">
         <button type="button" class="primary" id="btnStart">開始一局</button>
@@ -284,12 +294,14 @@
 
     <div id="phase-question" hidden>
       <div class="timer" id="timer">15</div>
-      <p class="muted" style="text-align:center;margin:0">競賽模式：倒數期間自動掃描 · 依<strong>首次答對</strong>時間計分</p>
+      <p class="muted" style="text-align:center;margin:0" id="quizHint">競賽模式：倒數期間自動掃描 · 依<strong>首次答對</strong>時間計分</p>
       <div class="big-q" id="questionText"></div>
       <div class="q-image-wrap" id="questionImageWrap" hidden>
         <img id="questionImage" alt="題目圖片">
       </div>
+      <div class="reading-note" id="readingNote" style="display:none"></div>
       <div class="opts" id="optionsBox"></div>
+      <div class="top5" id="liveTop5"></div>
       <div class="row" style="margin:8px 0">
         <button type="button" class="ok" id="btnFinishEarly">提前結束並計分</button>
         <button type="button" id="btnClearScan">清除本輪讀取</button>
@@ -474,6 +486,7 @@ function setQuestionImage(url){
 }
 
 let scores = {}, roundData = {}, qIndex = 0, phase = "lobby";
+let readTimerId = null, answering = false;
 let timerId = null, remain = 15, seatMax = 50, camStream = null, detectLoop = null, detector = null;
 let cvReady = false, cvDictionary = null, cvInitError = "", cvDetectorKind = "";
 let questionStartedAt = 0, questionDurationSec = 15;
@@ -950,6 +963,7 @@ function fillSimSeats(){
 function registerAnswer(seat, answer, manual){
   seat=+seat; answer=String(answer).toUpperCase();
   if(!LETTERS.includes(answer)||seat<1||seat>seatMax) return;
+  if(!answering) return; // 讀題階段（選項尚未出現）不收答案
   const now = performance.now();
   const elapsed = Math.max(0, now - questionStartedAt);
   let d = roundData[seat];
@@ -988,6 +1002,23 @@ function registerAnswer(seat, answer, manual){
   }
   updateScanLive();
   updateDetectCount();
+  renderLiveTop5();
+}
+
+function renderLiveTop5(){
+  const el = $("#liveTop5"); if(!el) return;
+  const item = QUESTIONS[qIndex];
+  const correctLetter = item ? LETTERS[item.answer] : null;
+  const durMs = questionDurationSec * 1000;
+  const rows = Object.keys(scores).map(Number).map(seat=>{
+    const gain = (answering && correctLetter) ? scoreForSeat(roundData[seat], correctLetter, durMs) : 0;
+    return { seat, total: scores[seat].score + gain, gain, correct: scores[seat].correct + (gain>0?1:0) };
+  }).filter(r=>r.total>0)
+    .sort((a,b)=>b.total-a.total||b.correct-a.correct||a.seat-b.seat).slice(0,5);
+  const medal = ["🥇","🥈","🥉","4","5"];
+  el.innerHTML = `<h3>🏆 即時前 5 名</h3>` + (rows.length
+    ? rows.map((r,i)=>`<div class="top5-row ${i<3?"r"+(i+1):""}"><span class="rk">${medal[i]}</span><span class="nm">${seatLabel(r.seat)}</span><span class="pt">${r.total}${r.gain>0?`<span class="gain">+${r.gain}</span>`:""}</span></div>`).join("")
+    : `<div class="muted">還沒有人得分，快舉卡片搶第一！</div>`);
 }
 
 function updateScanLive(){
@@ -1023,9 +1054,12 @@ function scoreForSeat(d, correctLetter, durationMs){
   return SCORE_BASE + Math.round(SCORE_SPEED * ratio);
 }
 
+function setShown(el, on){ if(el) el.style.display = on ? "" : "none"; }
+
 function showQuestion(){
   const item=QUESTIONS[qIndex]; if(!item){ showBoard(true); return; }
-  roundData = {};
+  clearInterval(readTimerId); clearInterval(timerId);
+  roundData = {}; answering = false;
   updateScanLive(); updateDetectCount(); renderProgress(); setPhase("question");
   fillSimSeats();
   $("#questionText").textContent=item.q;
@@ -1035,16 +1069,25 @@ function showQuestion(){
     return `<div class="opt ${LETTERS[i].toLowerCase()}"><span class="k">${LETTERS[i]}</span><span>${label}</span></div>`;
   }).join("");
   questionDurationSec = Math.max(5, +$("#qSeconds").value || 15);
-  remain = questionDurationSec;
-  questionStartedAt = performance.now();
-  $("#timer").textContent=remain; $("#timer").classList.remove("hot");
-  clearInterval(timerId);
-  timerId=setInterval(()=>{
-    remain--;
-    $("#timer").textContent=remain;
-    if(remain<=5) $("#timer").classList.add("hot");
-    if(remain<=0){ clearInterval(timerId); gradeRound(); }
-  },1000);
+  const rs = parseInt($("#readSeconds").value, 10);
+  const readSec = Math.max(0, Math.min(30, isNaN(rs) ? 5 : rs));
+  renderLiveTop5();
+
+  if(readSec > 0){
+    // 讀題階段：只顯示題目（與圖片），選項與倒數先隱藏
+    setShown($("#optionsBox"), false); setShown($("#timer"), false); setShown($("#quizHint"), false);
+    setShown($("#readingNote"), true);
+    $("#btnFinishEarly").textContent = "跳過讀題";
+    let left = readSec;
+    const note = ()=>{ $("#readingNote").textContent = `📖 請先讀題… ${left} 秒後顯示選項並開始倒數`; };
+    note();
+    readTimerId = setInterval(()=>{
+      left--;
+      if(left<=0){ clearInterval(readTimerId); revealOptions(); } else note();
+    },1000);
+  }else{
+    revealOptions();
+  }
 
   // 競賽模式：出題後立刻開鏡頭連續掃描
   const video=$("#quizVideo"), overlay=$("#quizOverlay");
@@ -1073,8 +1116,28 @@ function showQuestion(){
   });
 }
 
-function gradeRound(){
+function revealOptions(){
+  if(phase!=="question" || answering) return;
+  clearInterval(readTimerId);
+  answering = true;
+  setShown($("#readingNote"), false);
+  setShown($("#optionsBox"), true); setShown($("#timer"), true); setShown($("#quizHint"), true);
+  $("#btnFinishEarly").textContent = "提前結束並計分";
+  remain = questionDurationSec;
+  questionStartedAt = performance.now();
+  $("#timer").textContent = remain; $("#timer").classList.remove("hot");
   clearInterval(timerId);
+  timerId = setInterval(()=>{
+    remain--;
+    $("#timer").textContent = remain;
+    if(remain<=5) $("#timer").classList.add("hot");
+    if(remain<=0){ clearInterval(timerId); gradeRound(); }
+  },1000);
+  renderLiveTop5();
+}
+
+function gradeRound(){
+  clearInterval(timerId); clearInterval(readTimerId); answering = false;
   const item=QUESTIONS[qIndex], correctLetter=LETTERS[item.answer];
   const durationMs = questionDurationSec * 1000;
   const gained = [];
@@ -1111,13 +1174,13 @@ function showBoard(final=false){
 
 $("#btnStart").onclick=()=>{ ensureScores(); qIndex=0; showQuestion(); };
 $("#btnResetScores").onclick=()=>{ scores={}; ensureScores(); alert("分數已清空"); };
-$("#btnFinishEarly").onclick=()=>{ clearInterval(timerId); gradeRound(); };
+$("#btnFinishEarly").onclick=()=>{ if(!answering){ revealOptions(); return; } clearInterval(timerId); gradeRound(); };
 $("#btnClearScan").onclick=()=>{ roundData={}; updateScanLive(); updateDetectCount(); };
 $("#btnSimAdd").onclick=()=>registerAnswer($("#simSeat").value, $("#simAns").value, true);
 $("#btnNext").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
 $("#btnShowBoard").onclick=()=>showBoard(false);
 $("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
-$("#btnNewGame").onclick=()=>{ stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
+$("#btnNewGame").onclick=()=>{ clearInterval(readTimerId); clearInterval(timerId); answering=false; stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
 $("#btnExport").onclick=()=>{
   const rows=[["排名","座號","姓名","分數","答對題數"]];
   Object.keys(scores).map(Number).map(seat=>({seat,score:scores[seat].score,correct:scores[seat].correct}))
