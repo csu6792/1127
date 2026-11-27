@@ -270,6 +270,16 @@
         </div>
         <div class="import-status muted" id="importStatus">目前使用內建題目</div>
       </div>
+      <div class="import-box">
+        <h3 style="margin-top:0">學生名單（CSV / TXT / JSON）</h3>
+        <p class="muted">每行「座號,姓名」；或只放姓名（一行一人，依序為 1、2、3…）。上傳後排行榜、即時讀取與卡片都會顯示姓名。</p>
+        <div class="row">
+          <input type="file" id="rosterFile" accept=".csv,.txt,.json,text/csv,text/plain,application/json" style="max-width:220px">
+          <button type="button" id="btnRosterTemplate">下載範本</button>
+          <button type="button" id="btnRosterClear">清除名單</button>
+        </div>
+        <div class="import-status muted" id="rosterStatus">尚未上傳名單（顯示座號）</div>
+      </div>
     </div>
 
     <div id="phase-question" hidden>
@@ -315,7 +325,7 @@
     <div id="phase-board" hidden>
       <h2>🏆 座號排行榜</h2>
       <table>
-        <thead><tr><th>#</th><th>座號</th><th>分數</th><th>答對</th></tr></thead>
+        <thead><tr><th>#</th><th>座號</th><th>姓名</th><th>分數</th><th>答對</th></tr></thead>
         <tbody id="boardBody"></tbody>
       </table>
       <div class="row" style="margin-top:14px">
@@ -372,6 +382,7 @@
       四邊有 <b>A / B / C / D</b>：上A、左B、下C、右D。把要選的字母轉到<strong>最上面</strong>再舉起。<br>
       列印請用 A4、<strong>實際大小 100%</strong>（不要「符合頁面」）。6～10 公尺遠距請選每頁 1 張，並用 A4 實際大小 100% 列印。裁切後建議霧面護貝。
     </p>
+    <div class="chip no-print" id="genStatus" style="display:inline-block;margin-bottom:10px">尚未產生</div>
     <div id="printArea"><div class="cards-grid" id="cardsGrid"></div></div>
   </section>
 
@@ -472,6 +483,63 @@ const MAX_PROCESS_WIDTH = 1920;
 let scanFps = 0, scanFrameCount = 0, scanFpsStartedAt = 0, scanProcessMs = 0;
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+
+// ===== 學生名單 =====
+let roster = {};
+const esc = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nameOf = seat => roster[seat] || "";
+const seatLabel = seat => nameOf(seat) ? `${seat} 號 ${esc(nameOf(seat))}` : `座號 ${seat}`;
+function parseRoster(text){
+  text = text.replace(/^\uFEFF/,"").trim();
+  const out = {};
+  if(!text) return out;
+  if(text[0]==="{" || text[0]==="["){
+    const data = JSON.parse(text);
+    if(Array.isArray(data)){
+      data.forEach((v,i)=>{
+        if(v && typeof v==="object"){
+          const seat = +(v.seat ?? v.id ?? v["座號"]), name = v.name ?? v["姓名"];
+          if(seat && name) out[seat] = String(name).trim();
+        }else if(v!=null && String(v).trim()) out[i+1] = String(v).trim();
+      });
+    }else{
+      Object.keys(data).forEach(k=>{ if(+k && data[k]) out[+k] = String(data[k]).trim(); });
+    }
+  }else{
+    let auto = 0;
+    text.split(/\r?\n/).forEach(raw=>{
+      const line = raw.trim(); if(!line) return;
+      const parts = line.split(/[,\t;，]/).map(x=>x.trim().replace(/^["'“”]+|["'“”]+$/g,"").trim()).filter(x=>x!=="");
+      if(/^(座號|號碼|學號|seat|no|id)$/i.test(parts[0]||"")) return; // 標題列
+      const sp = line.match(/^(\d+)[\s.、]+(\S.*)$/);
+      if(parts.length>=2 && /^\d+$/.test(parts[0])){ auto = +parts[0]; out[auto] = parts.slice(1).join(" "); }
+      else if(parts.length===1 && sp){ auto = +sp[1]; out[auto] = sp[2].trim(); }
+      else if(parts.length>=1){ auto++; out[auto] = parts.join(" "); }
+    });
+  }
+  return out;
+}
+function applyRoster(obj, persist=true){
+  const all = Object.keys(obj).map(Number).filter(n=>n>=1);
+  const kept = {}; let dropped = 0;
+  all.forEach(n=>{ if(n<=50) kept[n]=obj[n]; else dropped++; });
+  roster = kept;
+  if(persist){ try{ localStorage.setItem("classroomRoster", JSON.stringify(roster)); }catch(e){} }
+  const st = $("#rosterStatus");
+  if(st){
+    const n = Object.keys(roster).length;
+    if(!n){ st.textContent = "尚未上傳名單（顯示座號）"; st.style.color = ""; }
+    else{
+      const max = Math.max(1, Math.min(50, +$("#seatMax").value||50));
+      const missing = []; for(let i=1;i<=max;i++) if(!roster[i]) missing.push(i);
+      st.textContent = `已載入 ${n} 位學生` + (dropped ? `（座號超過 50 的 ${dropped} 筆已略過）` : "") +
+        (missing.length ? `；座號 ${missing.slice(0,8).join("、")}${missing.length>8?" 等":""} 沒有姓名，會顯示座號` : "");
+      st.style.color = "var(--ok)";
+    }
+  }
+  if(typeof fillSimSeats==="function" && phase==="question") fillSimSeats();
+  if(cvReady && typeof genCards==="function") genCards();
+}
 
 // OpenCV.js 5.x：ArUco 已整合至 objdetect；不同建置的 JS 類別名稱可能略有差異，啟動時會做能力檢查。
 const OPENCV_DICTIONARY_NAME = "DICT_5X5_100"; // 50 位學生使用 100 個 ID 的字典，ID 1～50 有效
@@ -669,7 +737,7 @@ function drawArucoCard(canvas, id){
     ctx.drawImage(markerCanvas,markerX,markerY,markerSize,markerSize);
   }finally{markerMat.delete();}
   ctx.strokeStyle="#222";ctx.lineWidth=4;ctx.strokeRect(2,2,S-4,S-4);
-  ctx.fillStyle="#111";ctx.font="bold 36px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("座號 "+id,S/2,S+38);
+  ctx.fillStyle="#111";ctx.font="bold 36px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("座號 "+id+(nameOf(id)?"　"+nameOf(id):""),S/2,S+38,S-40);
   ctx.font="bold 20px system-ui,sans-serif";ctx.fillStyle="#444";ctx.fillText("把答案字母轉到最上方再舉起",S/2,S+70);
   ctx.font="18px system-ui,sans-serif";ctx.fillStyle="#666";ctx.fillText("上A · 左B · 下C · 右D（順時針轉）",S/2,S+92);
 }
@@ -684,6 +752,7 @@ function genCards(){
   grid.classList.add("layout-" + layout);
   if (!cvReady) {
     grid.innerHTML = "<p class='muted'>OpenCV.js 尚未就緒，請稍候；若載入失敗請重新整理並確認網路。</p>";
+    const gs=$("#genStatus"); if(gs) gs.textContent = "等待 OpenCV 載入…（載入完成會自動產生）";
     return;
   }
   for (let i = 1; i <= n; i++) {
@@ -700,10 +769,13 @@ function genCards(){
     div.appendChild(canvas);
     const hint = document.createElement("div");
     hint.className = "hint";
-    hint.textContent = "ArUco ID = " + i + " · 每頁 " + layout + " 張";
+    hint.textContent = "ArUco ID = " + i + (nameOf(i)?" · "+nameOf(i):"") + " · 每頁 " + layout + " 張";
     div.appendChild(hint);
     grid.appendChild(div);
   }
+  const gs=$("#genStatus");
+  if(gs) gs.textContent = "已產生 " + n + " 張（座號 1～" + n + "，每頁 " + layout + " 張）· " + new Date().toLocaleTimeString();
+  grid.scrollIntoView({behavior:"smooth", block:"start"});
 }
 $("#btnGenCards").onclick = () => { if(!cvReady) alert("OpenCV.js 尚未載入完成，請稍候或確認網路後重新整理"); genCards(); };
 $("#btnPrint").onclick = () => { genCards(); window.print(); };
@@ -797,7 +869,7 @@ function renderDetectIdList(markers, errorMsg){
     const ans = m.answer || "?";
     const cls = "id-card ans-" + (["A","B","C","D"].includes(ans) ? ans : "?");
     return `<div class="${cls}">
-      <div class="id-num">#${m.seat}</div>
+      <div class="id-num">#${m.seat}${nameOf(m.seat)?`<div class="id-angle">${esc(nameOf(m.seat))}</div>`:""}</div>
       <div class="id-meta">
         <div class="id-ans">${ans}</div>
         <div class="id-angle">${m.angle}°</div>
@@ -866,10 +938,10 @@ function renderProgress(){
 }
 function fillSimSeats(){
   const sel=$("#simSeat"); if(!sel) return; sel.innerHTML="";
-  for(let i=1;i<=seatMax;i++){ const o=document.createElement("option"); o.value=i; o.textContent="座號 "+i; sel.appendChild(o); }
+  for(let i=1;i<=seatMax;i++){ const o=document.createElement("option"); o.value=i; o.textContent=(nameOf(i)? i+" 號 "+nameOf(i) : "座號 "+i); sel.appendChild(o); }
   const quick=$("#simQuick"); if(!quick) return; quick.innerHTML="";
   for(let i=1;i<=Math.min(seatMax,24);i++){
-    const b=document.createElement("button"); b.type="button"; b.textContent=i;
+    const b=document.createElement("button"); b.type="button"; b.textContent=nameOf(i)? i+" "+nameOf(i) : i;
     b.onclick=()=>registerAnswer(i, $("#simAns").value, true); quick.appendChild(b);
   }
 }
@@ -937,7 +1009,7 @@ function updateScanLive(){
       extra = " · 尚未答對";
     }
     const mark = (correctLetter && d.answer === correctLetter) ? " ✓" : "";
-    return `<div>座號 <b>${s}</b> → <b>${ans}</b>${mark}<span class="muted">${extra}</span></div>`;
+    return `<div><b>${seatLabel(s)}</b> → <b>${ans}</b>${mark}<span class="muted">${extra}</span></div>`;
   }).join("");
 }
 function updateDetectCount(){
@@ -1026,7 +1098,7 @@ function gradeRound(){
     return `<div class="opt ${L.toLowerCase()} ${L===correctLetter?"correct":"wrong"}"><span class="k">${L}</span><span>${t}（${counts[L]}人）</span></div>`;
   }).join("");
   $("#resultCorrectList").innerHTML = gained.length
-    ? gained.map(g=>`座號 ${g.seat} +${g.pts}（首對 ${((g.t||0)/1000).toFixed(1)}s）`).join("　")
+    ? gained.map(g=>`${seatLabel(g.seat)} +${g.pts}（首對 ${((g.t||0)/1000).toFixed(1)}s）`).join("　")
     : "本題沒有人答對（或尚未掃到）";
 }
 
@@ -1034,7 +1106,7 @@ function showBoard(final=false){
   setPhase("board"); $("#btnContinue").hidden=final||qIndex>=QUESTIONS.length-1;
   const rows=Object.keys(scores).map(Number).map(seat=>({seat,score:scores[seat].score,correct:scores[seat].correct}))
     .sort((a,b)=>b.score-a.score||b.correct-a.correct||a.seat-b.seat);
-  $("#boardBody").innerHTML=rows.map((r,i)=>`<tr class="${i<3?"rank-"+(i+1):""}"><td>${i+1}</td><td>座號 ${r.seat}</td><td>${r.score}</td><td>${r.correct}</td></tr>`).join("");
+  $("#boardBody").innerHTML=rows.map((r,i)=>`<tr class="${i<3?"rank-"+(i+1):""}"><td>${i+1}</td><td>${r.seat}</td><td>${nameOf(r.seat) ? esc(nameOf(r.seat)) : "—"}</td><td>${r.score}</td><td>${r.correct}</td></tr>`).join("");
 }
 
 $("#btnStart").onclick=()=>{ ensureScores(); qIndex=0; showQuestion(); };
@@ -1047,10 +1119,10 @@ $("#btnShowBoard").onclick=()=>showBoard(false);
 $("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
 $("#btnNewGame").onclick=()=>{ stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
 $("#btnExport").onclick=()=>{
-  const rows=[["排名","座號","分數","答對題數"]];
+  const rows=[["排名","座號","姓名","分數","答對題數"]];
   Object.keys(scores).map(Number).map(seat=>({seat,score:scores[seat].score,correct:scores[seat].correct}))
     .sort((a,b)=>b.score-a.score||b.correct-a.correct||a.seat-b.seat)
-    .forEach((r,i)=>rows.push([i+1,r.seat,r.score,r.correct]));
+    .forEach((r,i)=>rows.push([i+1,r.seat,'"'+nameOf(r.seat).replace(/"/g,'""')+'"',r.score,r.correct]));
   const csv = "\uFEFF" + rows.map(r=>r.join(",")).join("\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
@@ -1116,6 +1188,28 @@ $("#importFile").onchange=async (ev)=>{
   }
   ev.target.value = "";
 };
+
+$("#rosterFile").onchange = async (ev)=>{
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  try{
+    const obj = parseRoster(await file.text());
+    if(!Object.keys(obj).length) throw new Error("檔案裡沒有讀到任何姓名");
+    applyRoster(obj);
+  }catch(e){
+    alert("名單匯入失敗："+(e.message||e));
+    const st=$("#rosterStatus"); if(st){ st.textContent="名單匯入失敗"; st.style.color="var(--brand)"; }
+  }
+  ev.target.value = "";
+};
+$("#btnRosterClear").onclick = ()=>{ applyRoster({}); };
+$("#btnRosterTemplate").onclick = ()=>{
+  const csv = "\uFEFF座號,姓名\n1,王小明\n2,李小華\n3,陳大同\n";
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="roster-template.csv"; a.click();
+};
+try{ const saved = JSON.parse(localStorage.getItem("classroomRoster")||"null"); if(saved && Object.keys(saved).length) applyRoster(saved,false); }catch(e){}
 
 setPhase("lobby");
 </script>
