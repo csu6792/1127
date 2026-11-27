@@ -480,8 +480,13 @@ function waitForOpenCV(){
   if(cvInitPromise) return cvInitPromise;
   cvInitPromise = new Promise((resolve,reject)=>{
     const started = Date.now();
+    let thenableHandled = false;
     const check = () => {
-      const c = window.cv;
+      let c = window.cv;
+      if(c && typeof c.then === "function" && !c.Mat && !thenableHandled){
+        thenableHandled = true;
+        c.then(m => { if(m && typeof m.then === "function"){ try{ delete m.then; }catch(_){} } window.cv = m; });
+      }
       if(c && c.Mat && c.MatVector && (c.getPredefinedDictionary || c.aruco_getPredefinedDictionary)){
         try{
           const dictEnum = c[OPENCV_DICTIONARY_NAME] ?? (c.aruco_PredefinedDictionaryType && c.aruco_PredefinedDictionaryType[OPENCV_DICTIONARY_NAME]);
@@ -700,7 +705,7 @@ function genCards(){
     grid.appendChild(div);
   }
 }
-$("#btnGenCards").onclick = genCards;
+$("#btnGenCards").onclick = () => { if(!cvReady) alert("OpenCV.js 尚未載入完成，請稍候或確認網路後重新整理"); genCards(); };
 $("#btnPrint").onclick = () => { genCards(); window.print(); };
 const _pl = $("#printLayout");
 if (_pl) _pl.onchange = genCards;
@@ -802,7 +807,8 @@ function renderDetectIdList(markers, errorMsg){
 }
 
 $("#btnCam").onclick = async () => {
-  try { await waitForOpenCV(); } catch(e) { alert("OpenCV.js 無法啟動："+e.message); return; }
+  $("#camStatus").textContent = cvReady ? "啟動鏡頭中…" : "等待 OpenCV 載入…";
+  try { await waitForOpenCV(); } catch(e) { $("#camStatus").textContent="OpenCV 載入失敗"; alert("OpenCV.js 無法啟動："+e.message); return; }
   const ok = await startCamera($("#testVideo"));
   $("#camStatus").textContent = ok ? "拍攝中" : "失敗";
   if(!ok) return;
@@ -970,7 +976,12 @@ function showQuestion(){
 
   // 競賽模式：出題後立刻開鏡頭連續掃描
   const video=$("#quizVideo"), overlay=$("#quizOverlay");
-  waitForOpenCV().then(()=>startCamera(video)).then(ok=>{
+  const sl=$("#scanLive");
+  if(!cvReady && sl) sl.innerHTML="<div class='muted'>OpenCV 載入中…（可先用下方模擬輸入）</div>";
+  waitForOpenCV().then(()=>startCamera(video)).catch(err=>{
+    if(sl) sl.innerHTML="<div class='muted'>⚠ 無法自動掃描："+(err.message||err)+"（請用下方模擬輸入，或確認網路後重新整理）</div>";
+    return false;
+  }).then(ok=>{
     if(!ok) return;
     let lastScanAt = 0;
     const loop=(now)=>{
