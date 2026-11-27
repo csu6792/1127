@@ -488,17 +488,55 @@ function waitForOpenCV(){
           if(dictEnum == null) throw new Error("此 OpenCV.js 建置沒有 " + OPENCV_DICTIONARY_NAME + " 字典常數");
           cvDictionary = (c.getPredefinedDictionary || c.aruco_getPredefinedDictionary)(dictEnum);
           if(!cvDictionary) throw new Error("無法建立 ArUco 字典");
-          if(c.aruco_ArucoDetector){
-            detector = new c.aruco_ArucoDetector(cvDictionary);
-            cvDetectorKind = "aruco_ArucoDetector";
-          }else if(c.ArucoDetector){
-            detector = new c.ArucoDetector(cvDictionary);
-            cvDetectorKind = "ArucoDetector";
-          }else if(typeof c.detectMarkers === "function"){
-            detector = null;
-            cvDetectorKind = "legacy detectMarkers";
-          }else{
-            throw new Error("OpenCV.js 已載入，但沒有 ArUco 偵測 API。請使用含 objdetect/aruco 的 OpenCV.js 5.x 建置。");
+          // OpenCV.js 5.x：ArucoDetector 需要 3 個參數 (dictionary, detectorParams, refineParams)
+          function makeDetectorParams(){
+            if(c.aruco_DetectorParameters) return new c.aruco_DetectorParameters();
+            if(c.DetectorParameters) return new c.DetectorParameters();
+            return null;
+          }
+          function makeRefineParams(){
+            // RefineParameters(minRepDistance, errorCorrectionRate, checkAllOrders) — 依綁定可用 overload
+            try{
+              if(c.aruco_RefineParameters) return new c.aruco_RefineParameters(10, 3, true);
+            }catch(e1){}
+            try{
+              if(c.aruco_RefineParameters) return new c.aruco_RefineParameters();
+            }catch(e2){}
+            try{
+              if(c.RefineParameters) return new c.RefineParameters(10, 3, true);
+            }catch(e3){}
+            try{
+              if(c.RefineParameters) return new c.RefineParameters();
+            }catch(e4){}
+            return null;
+          }
+          const detParams = makeDetectorParams();
+          const refParams = makeRefineParams();
+          let created = false;
+          const DetectorCtors = [c.aruco_ArucoDetector, c.ArucoDetector].filter(Boolean);
+          for(const Ctor of DetectorCtors){
+            if(created) break;
+            // 嘗試 3 參數 → 2 參數 → 1 參數
+            const attempts = [];
+            if(detParams && refParams) attempts.push(() => new Ctor(cvDictionary, detParams, refParams));
+            if(detParams) attempts.push(() => new Ctor(cvDictionary, detParams));
+            attempts.push(() => new Ctor(cvDictionary));
+            for(const make of attempts){
+              try{
+                detector = make();
+                cvDetectorKind = (Ctor === c.aruco_ArucoDetector ? "aruco_ArucoDetector" : "ArucoDetector");
+                created = true;
+                break;
+              }catch(eCtor){ cvInitError = eCtor.message || String(eCtor); }
+            }
+          }
+          if(!created){
+            if(typeof c.detectMarkers === "function"){
+              detector = null;
+              cvDetectorKind = "legacy detectMarkers";
+            }else{
+              throw new Error(cvInitError || "OpenCV.js 已載入，但無法建立 ArucoDetector。");
+            }
           }
           cvReady = true;
           const status = document.querySelector("#engineStatus");
