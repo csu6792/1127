@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>教室紙卡答題｜OpenCV.js 版</title>
+<style>
+
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root {
+    --bg: #46178f;
+    --bg2: #2d0b5a;
+    --card: rgba(255,255,255,.08);
+    --ink: #ffffff;
+    --muted: rgba(255,255,255,.72);
+    --brand: #ff3355;
+    --ok: #26890c;
+    --line: rgba(255,255,255,.18);
+    --a: #e21b3c;
+    --b: #1368ce;
+    --c: #26890c;
+    --d: #ffa602;
+    --shadow: 0 8px 0 rgba(0,0,0,.25);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;
+    font-family:"Nunito","Noto Sans TC",system-ui,sans-serif;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, #7b2ff7 0%, transparent 55%),
+      radial-gradient(ellipse 70% 45% at 90% 10%, #f107a3 0%, transparent 50%),
+      linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%);
+    color:var(--ink);
+  }
+  h1{font-weight:900;font-size:clamp(26px,4vw,40px);letter-spacing:-.02em;margin:0 0 .2em}
+  h2,h3{margin:0 0 .4em;font-weight:800}
+  button,input,select{
+    font:inherit;border-radius:12px;border:0;
+    background:rgba(255,255,255,.14);color:var(--ink);
+    padding:12px 18px;cursor:pointer;font-weight:800;
+  }
+  button:hover{filter:brightness(1.08)}
+  button.primary{
+    background:linear-gradient(180deg,#ff5a7a,#ff3355);
+    box-shadow:var(--shadow);font-weight:900;
+  }
+  button.ok{
+    background:linear-gradient(180deg,#3dbb1f,#26890c);
+    box-shadow:0 6px 0 rgba(0,0,0,.22);color:#fff;font-weight:900;
+  }
+  button:disabled{opacity:.45;cursor:not-allowed}
+  input,select{background:rgba(0,0,0,.25);border:2px solid var(--line)}
+  .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .tabs{display:flex;gap:8px;margin:14px 0 16px;flex-wrap:wrap}
+  .tabs button{
+    background:rgba(0,0,0,.25);border-radius:999px;padding:10px 16px;
+    border:2px solid transparent;
+  }
+  .tabs button[aria-selected="true"]{
+    background:#fff;color:#46178f;border-color:#fff;
+  }
+  .panel{
+    display:none;background:rgba(0,0,0,.22);
+    border:2px solid var(--line);border-radius:24px;padding:22px;
+    backdrop-filter:blur(8px);
+  }
+  .panel.on{display:block}
+  .muted{color:var(--muted);font-size:14px;font-weight:700}
+  .chip{
+    background:rgba(0,0,0,.35);border-radius:999px;padding:8px 14px;
+    font-weight:900;font-size:14px;border:2px solid var(--line);
+  }
+  .hud{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .big-q{
+    font-size:clamp(24px,4.5vw,40px);font-weight:900;line-height:1.35;
+    margin:10px 0 8px;text-align:center;text-shadow:0 3px 0 rgba(0,0,0,.2);
+  }
+  .q-image-wrap{text-align:center;margin:12px 0}
+  .q-image-wrap img{
+    max-width:min(100%,440px);max-height:260px;border-radius:18px;
+    border:4px solid #fff;background:#1a0a33;object-fit:contain;
+    box-shadow:var(--shadow);
+  }
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+  .opt{
+    border-radius:16px;padding:18px 16px;font-weight:900;font-size:clamp(16px,2.5vw,22px);
+    border:0;display:flex;gap:12px;align-items:center;
+    box-shadow:var(--shadow);color:#fff;min-height:72px;
+  }
+  .opt .k{
+    width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    font-weight:900;color:#fff;flex:none;background:rgba(0,0,0,.25);
+    font-size:20px;
+  }
+  .opt.a{background:var(--a)}
+  .opt.b{background:var(--b)}
+  .opt.c{background:var(--c)}
+  .opt.d{background:var(--d)}
+  .opt.correct{outline:4px solid #fff;box-shadow:0 0 0 6px #26890c, var(--shadow)}
+  .opt.wrong{opacity:.45;filter:grayscale(.3)}
+  .timer{
+    font-size:clamp(56px,14vw,96px);font-weight:900;text-align:center;
+    font-variant-numeric:tabular-nums;color:#fff;
+    text-shadow:0 6px 0 rgba(0,0,0,.25);
+    line-height:1;margin:4px 0;
+  }
+  .timer.hot{color:#ffe066;animation:pulse .45s infinite alternate}
+  @keyframes pulse{to{transform:scale(1.08)}}
+  .cam-box{
+    position:relative;display:inline-block;width:100%;max-width:640px;
+    line-height:0;background:#110522;border-radius:18px;overflow:hidden;
+    min-height:220px;border:4px solid rgba(255,255,255,.35);
+    box-shadow:var(--shadow);
+  }
+  .cam-box video{
+    position:relative;z-index:1;width:100%;max-width:640px;min-height:220px;
+    height:auto;display:block;object-fit:cover;vertical-align:top;
+  }
+  .cam-box canvas{
+    position:absolute;left:0;top:0;z-index:2;width:100%;height:100%;
+    pointer-events:none;background:transparent;
+  }
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:800}
+  th{color:var(--muted);font-size:13px}
+  .rank-1{color:#ffd54f;font-weight:900;font-size:1.1em}
+  .rank-2{color:#e0e6ef;font-weight:900}
+  .rank-3{color:#ffab7b;font-weight:900}
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+  .cards-grid.layout-1,.cards-grid.layout-2{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  .card-print{background:#fff;color:#000;border-radius:8px;padding:14px;text-align:center;page-break-inside:avoid;border:1px solid #ddd}
+  .card-print canvas{width:100%;max-width:240px;height:auto;image-rendering:pixelated}
+  .card-print .hint{font-size:12px;color:#444;margin-top:6px;line-height:1.4}
+  .live-list{max-height:220px;overflow:auto;font-size:15px;font-weight:800}
+  .live-list div{padding:8px 4px;border-bottom:1px solid var(--line)}
+  .bar{height:12px;background:rgba(0,0,0,.35);border-radius:99px;overflow:hidden;margin:8px 0 14px;border:2px solid var(--line)}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd54f,#ff3355);width:0;transition:width .3s}
+  .sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+  .sim-grid button{padding:10px;font-size:14px}
+  pre.log,.import-box pre{white-space:pre-wrap;background:rgba(0,0,0,.4);padding:12px;border-radius:14px;min-height:80px;font-size:13px}
+  .import-box{
+    background:rgba(0,0,0,.28);border-radius:18px;padding:16px;margin-top:16px;
+    border:2px solid var(--line);
+  }
+  .import-status{font-size:14px;margin-top:8px;font-weight:800}
+  .kahoot-banner{
+    display:inline-block;background:#fff;color:#46178f;
+    font-weight:900;font-size:12px;padding:4px 10px;border-radius:999px;
+    margin-bottom:8px;letter-spacing:.04em;
+  }
+  #resultTitle{font-size:clamp(22px,4vw,34px);text-align:center}
+  #phase-result .opt{cursor:default}
+
+  .scan-layout{
+    display:grid;grid-template-columns:1fr minmax(200px,280px);gap:16px;align-items:start;
+  }
+  @media (max-width:800px){
+    .scan-layout{grid-template-columns:1fr}
+  }
+  .scan-main .cam-box{max-width:100%}
+  .scan-side{
+    background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.25);
+    border-radius:20px;padding:16px;min-height:240px;
+    box-shadow:0 8px 0 rgba(0,0,0,.2);
+  }
+  .scan-side-title{
+    font-family:"Nunito","Noto Sans TC",system-ui,sans-serif;
+    font-weight:900;font-size:22px;letter-spacing:.02em;margin-bottom:4px;
+  }
+  .scan-side-count{
+    font-weight:900;font-size:14px;color:var(--muted);margin-bottom:12px;
+  }
+  .scan-side-count span{color:#ffd54f;font-size:22px}
+  .id-list{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto}
+  .id-empty{
+    font-weight:800;color:var(--muted);text-align:center;padding:24px 8px;
+    border:2px dashed var(--line);border-radius:14px;
+  }
+  .id-card{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border-radius:14px;padding:12px 14px;color:#fff;font-weight:900;
+    box-shadow:0 5px 0 rgba(0,0,0,.22);
+    font-family:"Nunito","Noto Sans TC",system-ui,sans-serif;
+  }
+  .id-card .id-num{font-size:28px;line-height:1}
+  .id-card .id-meta{text-align:right}
+  .id-card .id-ans{
+    display:inline-block;min-width:36px;text-align:center;
+    background:rgba(0,0,0,.28);border-radius:10px;padding:4px 10px;font-size:22px;
+  }
+  .id-card .id-angle{font-size:12px;opacity:.85;margin-top:2px;font-weight:800}
+  .id-card.ans-A{background:var(--a)}
+  .id-card.ans-B{background:var(--b)}
+  .id-card.ans-C{background:var(--c)}
+  .id-card.ans-D{background:var(--d)}
+  .id-card.ans-?{background:#555}
+
+  @media print{
+    body *{visibility:hidden}
+    #printArea,#printArea *{visibility:visible}
+    #printArea{position:absolute;left:0;top:0;width:100%;background:#fff;padding:0.4cm}
+    .no-print{display:none!important}
+    .cards-grid{
+      display:grid!important;
+      gap:0.45cm 0.45cm!important;
+      justify-content:center;
+      align-content:start;
+    }
+    .cards-grid.layout-6{grid-template-columns:repeat(3, 6.2cm)!important}
+    .cards-grid.layout-6 .card-print{width:6.2cm!important}
+    .cards-grid.layout-6 .card-print canvas{width:5.5cm!important;max-width:5.5cm!important;height:auto!important}
+    .cards-grid.layout-4{grid-template-columns:repeat(2, 9cm)!important}
+    .cards-grid.layout-4 .card-print{width:9cm!important}
+    .cards-grid.layout-4 .card-print canvas{width:8.2cm!important;max-width:8.2cm!important;height:auto!important}
+    .cards-grid.layout-2{grid-template-columns:repeat(1, 14cm)!important}
+    .cards-grid.layout-2 .card-print{width:14cm!important}
+    .cards-grid.layout-2 .card-print canvas{width:12.5cm!important;max-width:12.5cm!important;height:auto!important}
+    .cards-grid.layout-1{grid-template-columns:repeat(1, 19cm)!important}
+    .cards-grid.layout-1 .card-print{width:19cm!important}
+    .cards-grid.layout-1 .card-print canvas{width:18.5cm!important;max-width:18.5cm!important;height:auto!important}
+    .cards-grid.layout-1 .card-print{break-after:page;page-break-after:always}
+    .card-print{
+      padding:0.15cm!important;border:0.4pt solid #999!important;
+      border-radius:0!important;page-break-inside:avoid;background:#fff!important;color:#000!important;
+    }
+    .card-print .hint{font-size:9pt!important;margin-top:1mm!important}
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kahoot-banner">CLASSROOM RACE</div>
+  <h1>教室紙卡答題</h1>
+  <p class="muted">競賽節奏 · 紙卡作答 · 座號排名 · 越快答對分越高</p>
+
+  <div class="tabs no-print">
+    <button type="button" data-tab="quiz" aria-selected="true">競賽</button>
+    <button type="button" data-tab="scan">鏡頭測試</button>
+    <button type="button" data-tab="cards">列印座號卡</button>
+    <button type="button" data-tab="help">說明</button>
+  </div>
+
+  <section class="panel on" id="tab-quiz">
+    <div class="hud">
+      <span class="chip" id="qProgress">第 0 / 0 題</span>
+      <span class="chip" id="phaseLabel">準備中</span>
+      <span class="chip">已偵測 <b id="detectCount">0</b> 人</span>
+    </div>
+    <div class="bar"><i id="qBar"></i></div>
+
+    <div id="phase-lobby">
+      <p>競賽模式：出題後<strong>立刻自動掃描</strong>。答對且越早被讀到，分數越高（基礎 500 + 速度最高 500）。</p>
+      <div class="row" style="margin:12px 0">
+        <label>座號 1～<input type="number" id="seatMax" value="50" min="1" max="50" style="width:70px"></label>
+        <label>答題秒數 <input type="number" id="qSeconds" value="15" min="5" max="60" style="width:70px"></label>
+      </div>
+      <div class="row">
+        <button type="button" class="primary" id="btnStart">開始一局</button>
+        <button type="button" id="btnResetScores">清空分數</button>
+      </div>
+      <div class="import-box">
+        <h3 style="margin-top:0">匯入題目（JSON）</h3>
+        <p class="muted">支援題目文字、四個選項、正解、選用圖片（網址或 data URL）。</p>
+        <div class="row">
+          <input type="file" id="importFile" accept=".json,application/json" style="max-width:220px">
+          <button type="button" id="btnLoadSample">載入示範題</button>
+          <button type="button" id="btnDlTemplate">下載範本</button>
+        </div>
+        <div class="import-status muted" id="importStatus">目前使用內建題目</div>
+      </div>
+    </div>
+
+    <div id="phase-question" hidden>
+      <div class="timer" id="timer">15</div>
+      <p class="muted" style="text-align:center;margin:0">競賽模式：倒數期間自動掃描 · 依<strong>首次答對</strong>時間計分</p>
+      <div class="big-q" id="questionText"></div>
+      <div class="q-image-wrap" id="questionImageWrap" hidden>
+        <img id="questionImage" alt="題目圖片">
+      </div>
+      <div class="opts" id="optionsBox"></div>
+      <div class="row" style="margin:8px 0">
+        <button type="button" class="ok" id="btnFinishEarly">提前結束並計分</button>
+        <button type="button" id="btnClearScan">清除本輪讀取</button>
+      </div>
+      <div class="cam-box">
+        <video id="quizVideo" autoplay playsinline webkit-playsinline muted></video>
+        <canvas id="quizOverlay"></canvas>
+      </div>
+      <h3 style="margin-top:14px">即時讀取 <span class="muted">（越早答對分越高）</span></h3>
+      <div class="live-list" id="scanLive"></div>
+      <h3 style="margin-top:14px">模擬輸入（備援）</h3>
+      <div class="row" style="margin-bottom:8px">
+        <select id="simSeat"></select>
+        <select id="simAns"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+        <button type="button" id="btnSimAdd">加入</button>
+      </div>
+      <div class="sim-grid" id="simQuick"></div>
+    </div>
+
+    <div id="phase-scan" hidden></div>
+
+    <div id="phase-result" hidden>
+      <h2 id="resultTitle">結果</h2>
+      <div class="opts" id="resultOpts"></div>
+      <div class="row" style="margin:12px 0">
+        <button type="button" class="primary" id="btnNext">下一題</button>
+        <button type="button" id="btnShowBoard">看總排行</button>
+      </div>
+      <h3>本題答對</h3>
+      <div id="resultCorrectList" class="muted"></div>
+    </div>
+
+    <div id="phase-board" hidden>
+      <h2>🏆 座號排行榜</h2>
+      <table>
+        <thead><tr><th>#</th><th>座號</th><th>分數</th><th>答對</th></tr></thead>
+        <tbody id="boardBody"></tbody>
+      </table>
+      <div class="row" style="margin-top:14px">
+        <button type="button" class="primary" id="btnContinue" hidden>繼續下一題</button>
+        <button type="button" id="btnExport">匯出 CSV</button>
+        <button type="button" id="btnNewGame">新的一局</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-scan">
+    <p class="muted">OpenCV.js ArUco 偵測測試。需 HTTPS 或 localhost；第一次載入需等待 OpenCV WebAssembly 初始化。</p>
+    <div class="row" style="margin:10px 0"><span class="chip" id="engineStatus">OpenCV.js 載入中…</span><span class="chip">字典 DICT_5X5_100</span><span class="chip">辨識上限 50 人</span></div>
+    <div class="row muted" style="margin:8px 0"><span>實際解析度：<b id="actualResolution">—</b></span><span>辨識 FPS：<b id="scanFps">—</b></span><span>單次耗時：<b id="scanMs">—</b> ms</span></div>
+    <div class="row" style="margin:10px 0">
+      <button type="button" class="primary" id="btnCam">開啟鏡頭</button>
+      <button type="button" id="btnCamStop">關閉</button>
+      <span class="chip" id="camStatus">未啟動</span>
+    </div>
+    <div class="scan-layout">
+      <div class="scan-main">
+        <div class="cam-box">
+          <video id="testVideo" autoplay playsinline webkit-playsinline muted></video>
+          <canvas id="testOverlay"></canvas>
+        </div>
+      </div>
+      <aside class="scan-side">
+        <div class="scan-side-title">目前偵測</div>
+        <div class="scan-side-count"><span id="liveIdCount">0</span> / 50 個 ID</div>
+        <div class="muted" id="scanPerf" style="font-size:13px;margin:4px 0 10px">等待鏡頭啟動</div>
+        <div class="id-list" id="detectIdList">
+          <div class="id-empty">尚未偵測到標記</div>
+        </div>
+        <pre class="log muted" id="detectLog" hidden></pre>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-cards">
+    <div class="row no-print" style="margin-bottom:12px">
+      <label>座號 1～<input type="number" id="printMax" value="50" min="1" max="50" style="width:70px"></label>
+      <label>每頁
+        <select id="printLayout">
+          <option value="6">6 張 · 標記約 5.5 cm</option>
+          <option value="4">4 張 · 標記約 8 cm</option>
+          <option value="2">2 張 · 中大型標記</option>
+          <option value="1" selected>1 張 · 最大標記（6～10 公尺推薦）</option>
+        </select>
+      </label>
+      <button type="button" class="primary" id="btnGenCards">產生卡片</button>
+      <button type="button" id="btnPrint">列印</button>
+    </div>
+    <p class="muted no-print">
+      四邊有 <b>A / B / C / D</b>：上A、左B、下C、右D。把要選的字母轉到<strong>最上面</strong>再舉起。<br>
+      列印請用 A4、<strong>實際大小 100%</strong>（不要「符合頁面」）。6～10 公尺遠距請選每頁 1 張，並用 A4 實際大小 100% 列印。裁切後建議霧面護貝。
+    </p>
+    <div id="printArea"><div class="cards-grid" id="cardsGrid"></div></div>
+  </section>
+
+  <section class="panel" id="tab-help">
+    <h2>對應規則</h2>
+    <ul style="line-height:1.8">
+      <li><b>ArUco ID</b> → 座號</li>
+      <li><b>標記旋轉角</b>（角點算出）→ A/B/C/D</li>
+    </ul>
+    <p class="muted">使用 OpenCV.js ArUco 模組與 DICT_5X5_100 字典。Marker 卡片也由同一套 OpenCV 字典產生；請重新列印新版卡片，舊版 js-aruco 卡片不保證相容。</p>
+  </section>
+</div>
+
+<script async src="https://docs.opencv.org/5.x/opencv.js"></script>
+<script>
+const DEFAULT_QUESTIONS = [
+  { q:"太陽系的中心是什麼？", options:["地球","太陽","月亮","火星"], answer:1 },
+  { q:"地球是離太陽第幾近的行星？", options:["第一","第二","第三","第四"], answer:2 },
+  { q:"月亮繞著哪一個星球轉？", options:["太陽","火星","地球","金星"], answer:2 },
+  { q:"地球自轉一圈大約多久？", options:["一小時","一天","一個月","一年"], answer:1 },
+  {
+    q:"圖中是哪一種動物？（示範看圖題，可换成你的圖片網址）",
+    image:"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMjAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzIwIDIwMCI+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyMDAiIHJ4PSIxNiIgZmlsbD0iIzFhMjMzMiIvPgogIDxlbGxpcHNlIGN4PSIxNjAiIGN5PSIxMjAiIHJ4PSI3MCIgcnk9IjUwIiBmaWxsPSIjZjRhMjYxIi8+CiAgPGNpcmNsZSBjeD0iMTMwIiBjeT0iMTAwIiByPSIxMCIgZmlsbD0iIzIyMiIvPgogIDxjaXJjbGUgY3g9IjE5MCIgY3k9IjEwMCIgcj0iMTAiIGZpbGw9IiMyMjIiLz4KICA8ZWxsaXBzZSBjeD0iMTYwIiBjeT0iMTI1IiByeD0iMTIiIHJ5PSI4IiBmaWxsPSIjZTc2ZjUxIi8+CiAgPHBhdGggZD0iTTEwMCA3MCBMMTIwIDEwMCBMOTAgOTUgWiIgZmlsbD0iI2Y0YTI2MSIvPgogIDxwYXRoIGQ9Ik0yMjAgNzAgTDIwMCAxMDAgTDIzMCA5NSBaIiBmaWxsPSIjZjRhMjYxIi8+CiAgPHRleHQgeD0iMTYwIiB5PSIzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2VhZWFlYSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSJib2xkIj7npLrnr4TnnIvlnJbpoYw8L3RleHQ+CiAgPHRleHQgeD0iMTYwIiB5PSIxODUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM4YjliYjQiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0Ij7pgJnmmK/kuIDpmrvospM8L3RleHQ+Cjwvc3ZnPg==",
+    options:["狗","貓","兔子","鳥"],
+    answer:1
+  }
+];
+let QUESTIONS = DEFAULT_QUESTIONS.slice();
+const LETTERS = ["A","B","C","D"];
+
+/** 正規化一題：answer 可為 0-3 或 A-D */
+function normalizeQuestion(raw, idx){
+  if(!raw || typeof raw !== "object") throw new Error("第 "+(idx+1)+" 題格式錯誤");
+  const q = String(raw.q || raw.question || raw.text || "").trim();
+  if(!q) throw new Error("第 "+(idx+1)+" 題缺少題目文字 q");
+  let options = raw.options || raw.choices;
+  if(typeof options === "string") options = options.split("|").map(s=>s.trim());
+  if(!Array.isArray(options) || options.length < 2) throw new Error("第 "+(idx+1)+" 題 options 需要至少 2 個選項");
+  options = options.slice(0,4).map(s=>String(s));
+  while(options.length < 4) options.push("");
+  let answer = raw.answer;
+  if(typeof answer === "string"){
+    const u = answer.trim().toUpperCase();
+    if(LETTERS.includes(u)) answer = LETTERS.indexOf(u);
+    else answer = parseInt(answer, 10);
+  }
+  answer = +answer;
+  if(!(answer >= 0 && answer <= 3)) throw new Error("第 "+(idx+1)+" 題 answer 需為 0-3 或 A-D");
+  const image = raw.image || raw.img || raw.picture || "";
+  return { q, options, answer, image: image ? String(image) : "" };
+}
+
+function loadQuestionBank(data){
+  let list = null, seconds = null, title = "";
+  if(Array.isArray(data)) list = data;
+  else if(data && Array.isArray(data.questions)){
+    list = data.questions;
+    if(data.seconds != null) seconds = +data.seconds;
+    if(data.title) title = String(data.title);
+  }else throw new Error("JSON 需為題目陣列，或 { title, seconds, questions:[...] }");
+  if(!list.length) throw new Error("題目是空的");
+  QUESTIONS = list.map((item,i)=>normalizeQuestion(item,i));
+  if(seconds && seconds >= 5 && $("#qSeconds")) $("#qSeconds").value = seconds;
+  const status = $("#importStatus");
+  if(status){
+    status.textContent = (title ? "「"+title+"」· " : "") + "已載入 "+QUESTIONS.length+" 題" +
+      (QUESTIONS.some(x=>x.image) ? "（含看圖題）" : "");
+    status.style.color = "var(--ok)";
+  }
+}
+
+function setQuestionImage(url){
+  const wrap = $("#questionImageWrap");
+  const img = $("#questionImage");
+  if(!wrap || !img) return;
+  if(url){
+    img.onload = ()=>{ wrap.hidden = false; };
+    img.onerror = ()=>{
+      wrap.hidden = true;
+      console.warn("題目圖片載入失敗", url);
+    };
+    img.src = url;
+    // 若已快取可能立刻 complete
+    if(img.complete && img.naturalWidth) wrap.hidden = false;
+  }else{
+    img.removeAttribute("src");
+    wrap.hidden = true;
+  }
+}
+
+let scores = {}, roundData = {}, qIndex = 0, phase = "lobby";
+let timerId = null, remain = 15, seatMax = 50, camStream = null, detectLoop = null, detector = null;
+let cvReady = false, cvDictionary = null, cvInitError = "", cvDetectorKind = "";
+let questionStartedAt = 0, questionDurationSec = 15;
+const SCORE_BASE = 500, SCORE_SPEED = 500, STABLE_FRAMES = 3;
+const DETECT_INTERVAL_MS = 125; // 約 8 次辨識/秒，優先保留遠距 Marker 細節
+const MAX_PROCESS_WIDTH = 1920;
+let scanFps = 0, scanFrameCount = 0, scanFpsStartedAt = 0, scanProcessMs = 0;
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+
+// OpenCV.js 5.x：ArUco 已整合至 objdetect；不同建置的 JS 類別名稱可能略有差異，啟動時會做能力檢查。
+const OPENCV_DICTIONARY_NAME = "DICT_5X5_100"; // 50 位學生使用 100 個 ID 的字典，ID 1～50 有效
+let cvInitPromise = null;
+function waitForOpenCV(){
+  if(cvInitPromise) return cvInitPromise;
+  cvInitPromise = new Promise((resolve,reject)=>{
+    const started = Date.now();
+    const check = () => {
+      const c = window.cv;
+      if(c && c.Mat && c.MatVector && (c.getPredefinedDictionary || c.aruco_getPredefinedDictionary)){
+        try{
+          const dictEnum = c[OPENCV_DICTIONARY_NAME] ?? (c.aruco_PredefinedDictionaryType && c.aruco_PredefinedDictionaryType[OPENCV_DICTIONARY_NAME]);
+          if(dictEnum == null) throw new Error("此 OpenCV.js 建置沒有 " + OPENCV_DICTIONARY_NAME + " 字典常數");
+          cvDictionary = (c.getPredefinedDictionary || c.aruco_getPredefinedDictionary)(dictEnum);
+          if(!cvDictionary) throw new Error("無法建立 ArUco 字典");
+          if(c.aruco_ArucoDetector){
+            detector = new c.aruco_ArucoDetector(cvDictionary);
+            cvDetectorKind = "aruco_ArucoDetector";
+          }else if(c.ArucoDetector){
+            detector = new c.ArucoDetector(cvDictionary);
+            cvDetectorKind = "ArucoDetector";
+          }else if(typeof c.detectMarkers === "function"){
+            detector = null;
+            cvDetectorKind = "legacy detectMarkers";
+          }else{
+            throw new Error("OpenCV.js 已載入，但沒有 ArUco 偵測 API。請使用含 objdetect/aruco 的 OpenCV.js 5.x 建置。");
+          }
+          cvReady = true;
+          const status = document.querySelector("#engineStatus");
+          if(status) status.textContent = "OpenCV.js 已就緒 · " + cvDetectorKind;
+          resolve(c);
+          return;
+        }catch(e){ cvInitError = e.message || String(e); }
+      }
+      if(Date.now() - started > 30000){
+        const msg = cvInitError || "OpenCV.js 初始化逾時。請確認網路可連線至 docs.opencv.org。";
+        const status = document.querySelector("#engineStatus");
+        if(status) status.textContent = "OpenCV.js 載入失敗";
+        reject(new Error(msg));
+        return;
+      }
+      setTimeout(check, 100);
+    };
+    if(window.cv && window.cv.onRuntimeInitialized !== undefined){
+      const previous = window.cv.onRuntimeInitialized;
+      window.cv.onRuntimeInitialized = function(){ if(typeof previous === "function") previous(); check(); };
+    }
+    check();
+  });
+  return cvInitPromise;
+}
+function markerAngleDeg(corners){
+  const a = corners[0], b = corners[1];
+  return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+}
+function angleToAnswer(deg){
+  let a = ((deg % 360) + 360) % 360;
+  if(a >= 315 || a < 45) return "A";
+  if(a >= 45 && a < 135) return "B";
+  if(a >= 135 && a < 225) return "C";
+  return "D";
+}
+function readCvCorners(cornerMat){
+  const data = cornerMat.data32F || cornerMat.data64F || [];
+  const out=[];
+  for(let i=0;i<8;i+=2) out.push({x:Number(data[i]), y:Number(data[i+1])});
+  return out;
+}
+function detectWithOpenCV(gray){
+  const c=window.cv, corners=new c.MatVector(), ids=new c.Mat();
+  try{
+    if(detector && typeof detector.detectMarkers === "function") detector.detectMarkers(gray, corners, ids);
+    else if(typeof c.detectMarkers === "function") c.detectMarkers(gray, cvDictionary, corners, ids);
+    else throw new Error("找不到 detectMarkers API");
+    const out=[];
+    const idData=ids.data32S || ids.data32F || [];
+    for(let i=0;i<idData.length;i++){
+      const cm=corners.get(i);
+      try{ out.push({id:Number(idData[i]), corners:readCvCorners(cm)}); }
+      finally{ cm.delete(); }
+    }
+    return out;
+  }finally{ corners.delete(); ids.delete(); }
+}
+function detectMarkersFromVideo(video, overlay){
+  if(!video.videoWidth || !video.videoHeight) return {markers:[],error:null};
+  if(!cvReady) return {markers:[],error:"OpenCV.js 尚未完成初始化"};
+  const dw=Math.min(MAX_PROCESS_WIDTH,video.videoWidth), dh=Math.round(dw*video.videoHeight/video.videoWidth);
+  const work=detectMarkersFromVideo._work || (detectMarkersFromVideo._work=document.createElement("canvas"));
+  work.width=dw; work.height=dh;
+  const wctx=work.getContext("2d",{willReadFrequently:true});
+  wctx.drawImage(video,0,0,dw,dh);
+  let src=null, gray=null, found=[];
+  try{
+    src=window.cv.imread(work); gray=new window.cv.Mat();
+    window.cv.cvtColor(src,gray,window.cv.COLOR_RGBA2GRAY);
+    found=detectWithOpenCV(gray);
+  }catch(e){ return {markers:[],error:String(e && e.message || e)}; }
+  finally{ if(gray)gray.delete(); if(src)src.delete(); }
+  const ow=video.clientWidth||dw, oh=video.clientHeight||Math.round(ow*video.videoHeight/video.videoWidth)||dh;
+  if(overlay.width!==ow||overlay.height!==oh){overlay.width=ow;overlay.height=oh;}
+  const ctx=overlay.getContext("2d"); ctx.clearRect(0,0,ow,oh);
+  const sx=ow/dw, sy=oh/dh;
+  const results=found.map(m=>{
+    const ang=markerAngleDeg(m.corners), answer=angleToAnswer(ang), seat=m.id;
+    ctx.strokeStyle="#00e676";ctx.lineWidth=3;ctx.beginPath();
+    m.corners.forEach((p,i)=>{const x=p.x*sx,y=p.y*sy;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+    ctx.closePath();ctx.stroke();
+    ctx.strokeStyle="#ffeb3b";ctx.lineWidth=4;ctx.beginPath();
+    ctx.moveTo(m.corners[0].x*sx,m.corners[0].y*sy);ctx.lineTo(m.corners[1].x*sx,m.corners[1].y*sy);ctx.stroke();
+    const cx=m.corners.reduce((sum,p)=>sum+p.x,0)/4*sx, cy=m.corners.reduce((sum,p)=>sum+p.y,0)/4*sy;
+    ctx.fillStyle="rgba(0,0,0,.65)";ctx.fillRect(cx-48,cy-18,96,36);
+    ctx.fillStyle="#fff";ctx.font="bold 16px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("#"+seat+" → "+answer,cx,cy);
+    return {id:seat,seat,answer,angle:+ang.toFixed(1)};
+  });
+  return {markers:results,error:null};
+}
+
+$$(".tabs button").forEach(btn => {
+  btn.onclick = () => {
+    $$(".tabs button").forEach(b => b.setAttribute("aria-selected", b===btn?"true":"false"));
+    $$(".panel").forEach(p => p.classList.remove("on"));
+    $("#tab-"+btn.dataset.tab).classList.add("on");
+  };
+});
+
+function drawArucoCard(canvas, id){
+  if(!cvReady || !cvDictionary) throw new Error("OpenCV.js 尚未就緒，請稍後再產生卡片");
+  if(id<0 || id>=100) throw new Error("DICT_5X5_100 的 ID 範圍為 0～99");
+  const c=window.cv, S=640, edge=36, footer=100, markerSize=420;
+  canvas.width=S;canvas.height=S+footer;
+  const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
+  const bands=[
+    {L:"A",color:"#e94560",x:0,y:0,w:S,h:edge,tx:S/2,ty:edge/2,rot:0},
+    {L:"D",color:"#f5a623",x:S-edge,y:0,w:edge,h:S,tx:S-edge/2,ty:S/2,rot:Math.PI/2},
+    {L:"C",color:"#2bb673",x:0,y:S-edge,w:S,h:edge,tx:S/2,ty:S-edge/2,rot:0},
+    {L:"B",color:"#4fb3c4",x:0,y:0,w:edge,h:S,tx:edge/2,ty:S/2,rot:-Math.PI/2}
+  ];
+  bands.forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);ctx.save();ctx.translate(b.tx,b.ty);ctx.rotate(b.rot);ctx.fillStyle="#fff";ctx.font="bold 30px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(b.L,0,0);ctx.restore();});
+  const markerMat=new c.Mat();
+  const markerCanvas=document.createElement("canvas");
+  try{
+    if(typeof c.generateImageMarker === "function") c.generateImageMarker(cvDictionary,id,markerSize,markerMat,1);
+    else if(cvDictionary && typeof cvDictionary.generateImageMarker === "function") cvDictionary.generateImageMarker(id,markerSize,markerMat,1);
+    else throw new Error("此 OpenCV.js 建置沒有 generateImageMarker；無法確保列印卡與偵測字典一致");
+    c.imshow(markerCanvas,markerMat);
+    ctx.imageSmoothingEnabled=false;
+    const pad=10, markerX=(S-markerSize)/2, markerY=(S-markerSize)/2;
+    ctx.fillStyle="#fff";ctx.fillRect(markerX-pad,markerY-pad,markerSize+pad*2,markerSize+pad*2);
+    ctx.drawImage(markerCanvas,markerX,markerY,markerSize,markerSize);
+  }finally{markerMat.delete();}
+  ctx.strokeStyle="#222";ctx.lineWidth=4;ctx.strokeRect(2,2,S-4,S-4);
+  ctx.fillStyle="#111";ctx.font="bold 36px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("座號 "+id,S/2,S+38);
+  ctx.font="bold 20px system-ui,sans-serif";ctx.fillStyle="#444";ctx.fillText("把答案字母轉到最上方再舉起",S/2,S+70);
+  ctx.font="18px system-ui,sans-serif";ctx.fillStyle="#666";ctx.fillText("上A · 左B · 下C · 右D（順時針轉）",S/2,S+92);
+}
+
+function genCards(){
+  const n = Math.max(1, Math.min(50, +$("#printMax").value || 50));
+  const raw = ($("#printLayout") && $("#printLayout").value) || "2";
+  const layout = ["1","2","4","6"].includes(raw) ? raw : "2";
+  const grid = $("#cardsGrid");
+  grid.innerHTML = "";
+  grid.classList.remove("layout-1", "layout-2", "layout-4", "layout-6");
+  grid.classList.add("layout-" + layout);
+  if (!cvReady) {
+    grid.innerHTML = "<p class='muted'>OpenCV.js 尚未就緒，請稍候；若載入失敗請重新整理並確認網路。</p>";
+    return;
+  }
+  for (let i = 1; i <= n; i++) {
+    const div = document.createElement("div");
+    div.className = "card-print";
+    const canvas = document.createElement("canvas");
+    try {
+      drawArucoCard(canvas, i);
+    } catch (e) {
+      div.textContent = "ID " + i + " 失敗：" + e.message;
+      grid.appendChild(div);
+      continue;
+    }
+    div.appendChild(canvas);
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = "ArUco ID = " + i + " · 每頁 " + layout + " 張";
+    div.appendChild(hint);
+    grid.appendChild(div);
+  }
+}
+$("#btnGenCards").onclick = genCards;
+$("#btnPrint").onclick = () => { genCards(); window.print(); };
+const _pl = $("#printLayout");
+if (_pl) _pl.onchange = genCards;
+waitForOpenCV().then(()=>genCards()).catch(err=>{ const s=document.querySelector("#engineStatus"); if(s)s.textContent="OpenCV.js 初始化失敗："+err.message; const g=document.querySelector("#cardsGrid"); if(g)g.innerHTML="<p class=\"muted\">OpenCV.js 初始化失敗："+err.message+"</p>"; });
+
+async function startCamera(videoEl){
+  if(camStream) stopCamera();
+  // 先清掉其他 video 的 src，避免串流掛在看不見的元素上
+  ["#quizVideo","#testVideo"].forEach(sel=>{
+    const v=$(sel); if(v && v!==videoEl){ v.srcObject=null; }
+  });
+  const tryConstraints = [
+    { video:{ facingMode:{ ideal:"environment" }, width:{ ideal:3840 }, height:{ ideal:2160 }, frameRate:{ ideal:30, max:30 } }, audio:false },
+    { video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1920 }, height:{ ideal:1080 }, frameRate:{ ideal:30, max:30 } }, audio:false },
+    { video:{ facingMode:{ ideal:"environment" }, width:{ ideal:3840 }, height:{ ideal:2160 }, frameRate:{ ideal:30, max:30 } }, audio:false },
+    { video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1920 }, height:{ ideal:1080 }, frameRate:{ ideal:30 } }, audio:false },
+    { video:{ facingMode:{ ideal:"environment" }, width:{ ideal:1280 }, height:{ ideal:720 } }, audio:false },
+    { video:true, audio:false }
+  ];
+  let lastErr=null;
+  for(const constraints of tryConstraints){
+    try{
+      camStream = await navigator.mediaDevices.getUserMedia(constraints);
+      break;
+    }catch(e){ lastErr=e; camStream=null; }
+  }
+  if(!camStream){
+    alert("無法開啟鏡頭："+(lastErr&&lastErr.message||lastErr||"未知"));
+    return false;
+  }
+  try{
+    videoEl.srcObject = camStream;
+    videoEl.muted = true;
+    videoEl.setAttribute("playsinline","true");
+    videoEl.setAttribute("webkit-playsinline","true");
+    // 等有實際影格再 play，避免黑畫面
+    if(videoEl.readyState < 2){
+      await new Promise((resolve,reject)=>{
+        const t=setTimeout(()=>resolve(),3000);
+        videoEl.onloadedmetadata=()=>{ clearTimeout(t); resolve(); };
+        videoEl.onerror=()=>{ clearTimeout(t); reject(new Error("video error")); };
+      });
+    }
+    await videoEl.play();
+    // 若仍是 0 尺寸，強制依 track 設定
+    const track=camStream.getVideoTracks()[0];
+    const s=track&&track.getSettings?track.getSettings():{};
+    if(videoEl.videoWidth){
+      videoEl.style.aspectRatio = videoEl.videoWidth+" / "+videoEl.videoHeight;
+    }else if(s.width&&s.height){
+      videoEl.style.aspectRatio = s.width+" / "+s.height;
+    }
+    return true;
+  }catch(e){
+    alert("鏡頭已取得但無法播放："+(e.message||e));
+    return false;
+  }
+}
+function stopCamera(){
+  if(detectLoop){ cancelAnimationFrame(detectLoop); detectLoop=null; }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  ["#quizVideo","#testVideo"].forEach(sel=>{
+    const v=$(sel); if(v){ v.srcObject=null; }
+  });
+}
+
+function renderDetectIdList(markers, errorMsg){
+  const list = $("#detectIdList");
+  const countEl = $("#liveIdCount");
+  if(countEl) countEl.textContent = markers ? markers.length : 0;
+  const perf = $("#scanPerf");
+  if(perf){
+    const track = camStream && camStream.getVideoTracks()[0];
+    const settings = track && track.getSettings ? track.getSettings() : {};
+    const resolution = settings.width && settings.height ? settings.width + "×" + settings.height : "解析度未知";
+    perf.textContent = (camStream ? "鏡頭 " + resolution + " · 辨識 " + scanFps + " FPS · 單次 " + scanProcessMs + "ms" : "等待鏡頭啟動") + " · 目標 50 人";
+  }
+  if(!list) return;
+  if(errorMsg){
+    list.innerHTML = `<div class="id-empty">${errorMsg}</div>`;
+    return;
+  }
+  if(!markers || !markers.length){
+    list.innerHTML = `<div class="id-empty">尚未偵測到標記</div>`;
+    return;
+  }
+  const sorted = markers.slice().sort((a,b)=>a.seat-b.seat);
+  list.innerHTML = sorted.map(m => {
+    const ans = m.answer || "?";
+    const cls = "id-card ans-" + (["A","B","C","D"].includes(ans) ? ans : "?");
+    return `<div class="${cls}">
+      <div class="id-num">#${m.seat}</div>
+      <div class="id-meta">
+        <div class="id-ans">${ans}</div>
+        <div class="id-angle">${m.angle}°</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+$("#btnCam").onclick = async () => {
+  try { await waitForOpenCV(); } catch(e) { alert("OpenCV.js 無法啟動："+e.message); return; }
+  const ok = await startCamera($("#testVideo"));
+  $("#camStatus").textContent = ok ? "拍攝中" : "失敗";
+  if(!ok) return;
+  const video = $("#testVideo"), overlay = $("#testOverlay");
+  const settings = camStream && camStream.getVideoTracks()[0] && camStream.getVideoTracks()[0].getSettings ? camStream.getVideoTracks()[0].getSettings() : {};
+  $("#actualResolution").textContent = (settings.width || video.videoWidth) + " × " + (settings.height || video.videoHeight);
+  scanFps = 0; scanFrameCount = 0; scanFpsStartedAt = 0;
+  let lastScanAt = 0;
+  const loop = (now) => {
+    if(!camStream) return;
+    if(video.readyState>=2 && now - lastScanAt >= DETECT_INTERVAL_MS){
+      lastScanAt = now;
+      const detectStartedAt = performance.now();
+      const r = detectMarkersFromVideo(video, overlay);
+      scanProcessMs = Math.round(performance.now() - detectStartedAt);
+      $("#scanMs").textContent = scanProcessMs;
+      if(r.error) renderDetectIdList([], "錯誤："+r.error);
+      else renderDetectIdList(r.markers || [], null);
+      scanFrameCount++;
+      if(!scanFpsStartedAt) scanFpsStartedAt = now;
+      if(now - scanFpsStartedAt >= 1000){
+        scanFps = Math.round(scanFrameCount * 1000 / (now - scanFpsStartedAt));
+        $("#scanFps").textContent = scanFps;
+        scanFrameCount = 0;
+        scanFpsStartedAt = now;
+        renderDetectIdList(r.markers || [], null);
+      }
+    }
+    detectLoop = requestAnimationFrame(loop);
+  };
+  detectLoop = requestAnimationFrame(loop);
+};
+$("#btnCamStop").onclick = () => {
+  stopCamera();
+  $("#camStatus").textContent="已關閉";
+  renderDetectIdList([], null);
+  const list = $("#detectIdList");
+  if(list) list.innerHTML = `<div class="id-empty">已停止</div>`;
+  if($("#liveIdCount")) $("#liveIdCount").textContent = "0";
+  if($("#scanPerf")) $("#scanPerf").textContent = "已停止";
+};
+
+function ensureScores(){
+  seatMax = Math.max(1, Math.min(50, +$("#seatMax").value||50));
+  for(let i=1;i<=seatMax;i++) if(!scores[i]) scores[i]={score:0,correct:0};
+}
+function setPhase(name){
+  phase = name;
+  ["lobby","question","scan","result","board"].forEach(p => { const el=$("#phase-"+p); if(el) el.hidden = p!==name; });
+  $("#phaseLabel").textContent = {lobby:"準備中",question:"競賽掃描中",scan:"掃描中",result:"看結果",board:"排行榜"}[name]||name;
+}
+function renderProgress(){
+  $("#qProgress").textContent = `第 ${qIndex+1} / ${QUESTIONS.length} 題`;
+  $("#qBar").style.width = (qIndex/QUESTIONS.length*100)+"%";
+}
+function fillSimSeats(){
+  const sel=$("#simSeat"); if(!sel) return; sel.innerHTML="";
+  for(let i=1;i<=seatMax;i++){ const o=document.createElement("option"); o.value=i; o.textContent="座號 "+i; sel.appendChild(o); }
+  const quick=$("#simQuick"); if(!quick) return; quick.innerHTML="";
+  for(let i=1;i<=Math.min(seatMax,24);i++){
+    const b=document.createElement("button"); b.type="button"; b.textContent=i;
+    b.onclick=()=>registerAnswer(i, $("#simAns").value, true); quick.appendChild(b);
+  }
+}
+
+/** 登記答案；auto=false 表示模擬手動（立刻當穩定） */
+function registerAnswer(seat, answer, manual){
+  seat=+seat; answer=String(answer).toUpperCase();
+  if(!LETTERS.includes(answer)||seat<1||seat>seatMax) return;
+  const now = performance.now();
+  const elapsed = Math.max(0, now - questionStartedAt);
+  let d = roundData[seat];
+  if(!d){
+    d = roundData[seat] = { answer:null, stable:null, streak:0, firstCorrectMs:null, lastMs:0, lastDetectedAt:0 };
+  }
+  if(manual){
+    d.answer = answer;
+    d.stable = answer;
+    d.streak = STABLE_FRAMES;
+    d.lastMs = elapsed;
+    const item = QUESTIONS[qIndex];
+    const correctLetter = item ? LETTERS[item.answer] : null;
+    if(correctLetter && answer === correctLetter && d.firstCorrectMs == null){
+      d.firstCorrectMs = elapsed;
+    }
+  }else{
+    // 三次穩定辨識；若中間超過 400ms 沒看到該卡，重新累計，避免把不連續影格當連續確認
+    if(d.lastDetectedAt && now - d.lastDetectedAt > 400){ d.streak = 0; d.stable = null; }
+    d.lastDetectedAt = now;
+    if(d.stable === answer){
+      d.streak++;
+    }else{
+      d.stable = answer;
+      d.streak = 1;
+    }
+    if(d.streak >= STABLE_FRAMES){
+      d.answer = answer;
+      d.lastMs = elapsed;
+      const item = QUESTIONS[qIndex];
+      const correctLetter = item ? LETTERS[item.answer] : null;
+      if(correctLetter && answer === correctLetter && d.firstCorrectMs == null){
+        d.firstCorrectMs = elapsed;
+      }
+    }
+  }
+  updateScanLive();
+  updateDetectCount();
+}
+
+function updateScanLive(){
+  const el = $("#scanLive"); if(!el) return;
+  const item = QUESTIONS[qIndex];
+  const correctLetter = item ? LETTERS[item.answer] : null;
+  const rows = Object.keys(roundData).map(Number).sort((a,b)=>a-b);
+  if(!rows.length){
+    el.innerHTML = "<div class='muted'>尚未讀到 — 請將答案朝上舉向鏡頭</div>";
+    return;
+  }
+  el.innerHTML = rows.map(s => {
+    const d = roundData[s];
+    const ans = d.answer || "…";
+    let extra = "";
+    if(d.firstCorrectMs != null){
+      extra = ` · 首對 ${(d.firstCorrectMs/1000).toFixed(1)}s`;
+    }else if(d.answer){
+      extra = " · 尚未答對";
+    }
+    const mark = (correctLetter && d.answer === correctLetter) ? " ✓" : "";
+    return `<div>座號 <b>${s}</b> → <b>${ans}</b>${mark}<span class="muted">${extra}</span></div>`;
+  }).join("");
+}
+function updateDetectCount(){
+  $("#detectCount").textContent = Object.keys(roundData).filter(s => roundData[s].answer).length;
+}
+
+function scoreForSeat(d, correctLetter, durationMs){
+  if(!d || !d.answer || d.answer !== correctLetter) return 0;
+  const elapsed = d.firstCorrectMs != null ? d.firstCorrectMs : durationMs;
+  const ratio = 1 - Math.min(1, Math.max(0, elapsed / durationMs));
+  return SCORE_BASE + Math.round(SCORE_SPEED * ratio);
+}
+
+function showQuestion(){
+  const item=QUESTIONS[qIndex]; if(!item){ showBoard(true); return; }
+  roundData = {};
+  updateScanLive(); updateDetectCount(); renderProgress(); setPhase("question");
+  fillSimSeats();
+  $("#questionText").textContent=item.q;
+  setQuestionImage(item.image || "");
+  $("#optionsBox").innerHTML=item.options.map((t,i)=>{
+    const label = t || ("選項 "+LETTERS[i]);
+    return `<div class="opt ${LETTERS[i].toLowerCase()}"><span class="k">${LETTERS[i]}</span><span>${label}</span></div>`;
+  }).join("");
+  questionDurationSec = Math.max(5, +$("#qSeconds").value || 15);
+  remain = questionDurationSec;
+  questionStartedAt = performance.now();
+  $("#timer").textContent=remain; $("#timer").classList.remove("hot");
+  clearInterval(timerId);
+  timerId=setInterval(()=>{
+    remain--;
+    $("#timer").textContent=remain;
+    if(remain<=5) $("#timer").classList.add("hot");
+    if(remain<=0){ clearInterval(timerId); gradeRound(); }
+  },1000);
+
+  // 競賽模式：出題後立刻開鏡頭連續掃描
+  const video=$("#quizVideo"), overlay=$("#quizOverlay");
+  waitForOpenCV().then(()=>startCamera(video)).then(ok=>{
+    if(!ok) return;
+    let lastScanAt = 0;
+    const loop=(now)=>{
+      if(phase!=="question"||!camStream) return;
+      if(video.readyState>=2 && now - lastScanAt >= DETECT_INTERVAL_MS){
+        lastScanAt = now;
+        const r=detectMarkersFromVideo(video, overlay);
+        if(r.markers){
+          r.markers.forEach(m=>{
+            if(m.seat>=1 && m.seat<=seatMax) registerAnswer(m.seat, m.answer, false);
+          });
+        }
+      }
+      detectLoop=requestAnimationFrame(loop);
+    };
+    detectLoop=requestAnimationFrame(loop);
+  });
+}
+
+function gradeRound(){
+  clearInterval(timerId);
+  const item=QUESTIONS[qIndex], correctLetter=LETTERS[item.answer];
+  const durationMs = questionDurationSec * 1000;
+  const gained = [];
+  Object.keys(roundData).map(Number).forEach(seat=>{
+    const d = roundData[seat];
+    const pts = scoreForSeat(d, correctLetter, durationMs);
+    if(pts>0){
+      scores[seat].score += pts;
+      scores[seat].correct += 1;
+      gained.push({ seat, pts, t: d.firstCorrectMs });
+    }
+  });
+  gained.sort((a,b)=>a.t-b.t);
+  setPhase("result");
+  stopCamera();
+  $("#resultTitle").textContent=`正確答案：${correctLetter}　${item.options[item.answer]}`;
+  const counts = {A:0,B:0,C:0,D:0};
+  Object.values(roundData).forEach(d=>{ if(d.answer && counts[d.answer]!=null) counts[d.answer]++; });
+  $("#resultOpts").innerHTML=item.options.map((t,i)=>{
+    const L=LETTERS[i];
+    return `<div class="opt ${L.toLowerCase()} ${L===correctLetter?"correct":"wrong"}"><span class="k">${L}</span><span>${t}（${counts[L]}人）</span></div>`;
+  }).join("");
+  $("#resultCorrectList").innerHTML = gained.length
+    ? gained.map(g=>`座號 ${g.seat} +${g.pts}（首對 ${((g.t||0)/1000).toFixed(1)}s）`).join("　")
+    : "本題沒有人答對（或尚未掃到）";
+}
+
+function showBoard(final=false){
+  setPhase("board"); $("#btnContinue").hidden=final||qIndex>=QUESTIONS.length-1;
+  const rows=Object.keys(scores).map(Number).map(seat=>({seat,score:scores[seat].score,correct:scores[seat].correct}))
+    .sort((a,b)=>b.score-a.score||b.correct-a.correct||a.seat-b.seat);
+  $("#boardBody").innerHTML=rows.map((r,i)=>`<tr class="${i<3?"rank-"+(i+1):""}"><td>${i+1}</td><td>座號 ${r.seat}</td><td>${r.score}</td><td>${r.correct}</td></tr>`).join("");
+}
+
+$("#btnStart").onclick=()=>{ ensureScores(); qIndex=0; showQuestion(); };
+$("#btnResetScores").onclick=()=>{ scores={}; ensureScores(); alert("分數已清空"); };
+$("#btnFinishEarly").onclick=()=>{ clearInterval(timerId); gradeRound(); };
+$("#btnClearScan").onclick=()=>{ roundData={}; updateScanLive(); updateDetectCount(); };
+$("#btnSimAdd").onclick=()=>registerAnswer($("#simSeat").value, $("#simAns").value, true);
+$("#btnNext").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
+$("#btnShowBoard").onclick=()=>showBoard(false);
+$("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
+$("#btnNewGame").onclick=()=>{ stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
+$("#btnExport").onclick=()=>{
+  const rows=[["排名","座號","分數","答對題數"]];
+  Object.keys(scores).map(Number).map(seat=>({seat,score:scores[seat].score,correct:scores[seat].correct}))
+    .sort((a,b)=>b.score-a.score||b.correct-a.correct||a.seat-b.seat)
+    .forEach((r,i)=>rows.push([i+1,r.seat,r.score,r.correct]));
+  const csv = "\uFEFF" + rows.map(r=>r.join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="aruco-quiz-scores.csv"; a.click();
+};
+
+const SAMPLE_BANK = {
+  title: "示範題庫（含看圖）",
+  seconds: 15,
+  questions: [
+    { q:"1+1=？", options:["1","2","3","4"], answer:"B" },
+    {
+      q:"圖中是什麼動物？",
+      image:"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMjAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzIwIDIwMCI+CiAgPHJlY3Qgd2lkdGg9IjMyMCIgaGVpZ2h0PSIyMDAiIHJ4PSIxNiIgZmlsbD0iIzFhMjMzMiIvPgogIDxlbGxpcHNlIGN4PSIxNjAiIGN5PSIxMjAiIHJ4PSI3MCIgcnk9IjUwIiBmaWxsPSIjZjRhMjYxIi8+CiAgPGNpcmNsZSBjeD0iMTMwIiBjeT0iMTAwIiByPSIxMCIgZmlsbD0iIzIyMiIvPgogIDxjaXJjbGUgY3g9IjE5MCIgY3k9IjEwMCIgcj0iMTAiIGZpbGw9IiMyMjIiLz4KICA8ZWxsaXBzZSBjeD0iMTYwIiBjeT0iMTI1IiByeD0iMTIiIHJ5PSI4IiBmaWxsPSIjZTc2ZjUxIi8+CiAgPHBhdGggZD0iTTEwMCA3MCBMMTIwIDEwMCBMOTAgOTUgWiIgZmlsbD0iI2Y0YTI2MSIvPgogIDxwYXRoIGQ9Ik0yMjAgNzAgTDIwMCAxMDAgTDIzMCA5NSBaIiBmaWxsPSIjZjRhMjYxIi8+CiAgPHRleHQgeD0iMTYwIiB5PSIzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2VhZWFlYSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSJib2xkIj7npLrnr4TnnIvlnJbpoYw8L3RleHQ+CiAgPHRleHQgeD0iMTYwIiB5PSIxODUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM4YjliYjQiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0Ij7pgJnmmK/kuIDpmrvospM8L3RleHQ+Cjwvc3ZnPg==",
+      options:["狗","貓","馬","魚"],
+      answer:1
+    },
+    { q:"台灣的首都是？", options:["高雄","台中","台北","台南"], answer:"C" }
+  ]
+};
+
+$("#btnLoadSample").onclick=()=>{
+  try{
+    loadQuestionBank(SAMPLE_BANK);
+  }catch(e){ alert(e.message||e); }
+};
+$("#btnDlTemplate").onclick=()=>{
+  const template = {
+    title: "我的題庫",
+    seconds: 15,
+    questions: [
+      {
+        q: "題目文字（必填）",
+        image: "",
+        options: ["選項A","選項B","選項C","選項D"],
+        answer: "A"
+      },
+      {
+        q: "看圖題範例：這是什麼？",
+        image: "https://example.com/your-image.jpg",
+        options: ["選項A","選項B","選項C","選項D"],
+        answer: 1
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(template, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "quiz-template.json";
+  a.click();
+};
+$("#importFile").onchange=async (ev)=>{
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    loadQuestionBank(data);
+  }catch(e){
+    alert("匯入失敗："+(e.message||e));
+    const status=$("#importStatus");
+    if(status){ status.textContent="匯入失敗"; status.style.color="var(--brand)"; }
+  }
+  ev.target.value = "";
+};
+
+setPhase("lobby");
+</script>
+</body>
+</html>
