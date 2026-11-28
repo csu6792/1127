@@ -132,8 +132,21 @@
   .card-print{background:#fff;color:#000;border-radius:8px;padding:14px;text-align:center;page-break-inside:avoid;border:1px solid #ddd}
   .card-print canvas{width:100%;max-width:240px;height:auto;image-rendering:pixelated}
   .card-print .hint{font-size:12px;color:#444;margin-top:6px;line-height:1.4}
-  .live-list{max-height:220px;overflow:auto;font-size:15px;font-weight:800}
-  .live-list div{padding:8px 4px;border-bottom:1px solid var(--line)}
+  .live-list{font-size:15px;font-weight:800}
+  .live-sum{font-size:18px;font-weight:900;margin-bottom:8px}
+  .live-sum b{font-size:26px;color:#7dff8a}
+  .live-sumbar{height:8px;background:rgba(255,255,255,.14);border-radius:6px;overflow:hidden;margin-top:6px}
+  .live-sumbar i{display:block;height:100%;background:#2ecc71;transition:width .3s}
+  .live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px}
+  .live-grid.compact{grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:5px}
+  .lt{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:52px;padding:5px 3px;border-radius:10px;border:2px solid transparent;background:rgba(255,255,255,.06);opacity:.4;text-align:center}
+  .lt .n{font-size:19px;font-weight:900;line-height:1.1}
+  .lt .nm{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lt .ck{display:none}
+  .lt.done{opacity:1;background:rgba(46,204,113,.3);border-color:#2ecc71}
+  .lt.done .ck{display:block;position:absolute;top:0;right:4px;font-size:13px;color:#7dff8a}
+  .lt.pop{animation:ltpop .6s}
+  @keyframes ltpop{0%{transform:scale(1)}35%{transform:scale(1.28);background:rgba(125,255,138,.75)}100%{transform:scale(1)}}
   .bar{height:12px;background:rgba(0,0,0,.35);border-radius:99px;overflow:hidden;margin:8px 0 14px;border:2px solid var(--line)}
   .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd54f,#ff3355);width:0;transition:width .3s}
   .sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
@@ -157,6 +170,51 @@
   .top5-row .pt{font-variant-numeric:tabular-nums}
   .top5-row .gain{color:#7dff8a;font-size:13px;margin-left:6px}
   .top5-row.r1{background:rgba(255,213,79,.28)}.top5-row.r2{background:rgba(224,230,239,.2)}.top5-row.r3{background:rgba(255,171,123,.2)}
+  .music-float{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:48px;height:48px;border-radius:50%;font-size:22px;padding:0;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  @media print{.music-float{display:none!important}}
+  #phase-rank{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));animation:rankfade .5s ease-out}
+  #phase-rank[hidden]{display:none}
+  @keyframes rankfade{from{opacity:0}to{opacity:1}}
+  .rank-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 18%,#6a35e8 0%,#2a0f63 48%,#0b0522 100%)}
+  .rank-bg::before{content:"";position:absolute;left:50%;top:18%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;background:repeating-conic-gradient(from 0deg,rgba(255,213,79,.14) 0deg 8deg,rgba(255,213,79,0) 8deg 24deg);animation:raysspin 40s linear infinite}
+  .rank-bg::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,rgba(255,64,160,.35),transparent 55%)}
+  @keyframes raysspin{to{transform:rotate(360deg)}}
+  #rankFx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .cf{position:absolute;top:-24px;width:10px;height:16px;border-radius:2px;opacity:.95;animation:cffall linear forwards}
+  @keyframes cffall{to{transform:translate3d(var(--dx,0),112vh,0) rotate(900deg)}}
+  .rank-inner{position:relative;width:min(920px,100%);max-height:100%;display:flex;flex-direction:column;align-items:center;overflow-y:auto;overflow-x:hidden;padding:10px 14px}
+  .rank-kicker{font-weight:900;letter-spacing:.2em;color:#ffe066;font-size:clamp(13px,2.2vw,20px);animation:kick .6s .1s backwards}
+  @keyframes kick{from{opacity:0;transform:translateY(-14px)}}
+  .rank-title{margin:2px 0 clamp(8px,2vh,24px);font-size:clamp(26px,min(7vw,10vh),72px);line-height:1.1;text-align:center;background:linear-gradient(90deg,#fff,#ffe066,#fff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:titlepop .9s cubic-bezier(.2,1.5,.4,1) backwards,shine 3.5s linear infinite}
+  @keyframes titlepop{from{opacity:0;transform:scale(.4) rotate(-6deg)}}
+  @keyframes shine{to{background-position:-200% 0}}
+  .rank-list{width:100%}
+  .rank-row{display:flex;align-items:center;gap:clamp(6px,1.6vw,18px);padding:clamp(7px,1.5vh,18px) clamp(12px,2.4vw,28px);border-radius:20px;margin-bottom:clamp(6px,1.2vh,14px);background:rgba(255,255,255,.12);backdrop-filter:blur(6px);font-weight:900;font-size:clamp(15px,min(4.2vw,5.6vh),46px);line-height:1.2;animation:rankin .7s cubic-bezier(.2,1.3,.4,1) backwards}
+  .rank-row .rk{width:1.5em;text-align:center;flex:none}
+  .rank-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rank-row .pt{font-variant-numeric:tabular-nums;flex:none;min-width:2.6em;text-align:right}
+  .rank-row .gain{color:#7dff8a;font-size:.55em;min-width:2.6em;text-align:right;flex:none}
+  .rank-row .mv{font-size:.55em;min-width:2.2em;text-align:center;flex:none}
+  .rank-row .mv.up{color:#7dff8a}.rank-row .mv.down{color:#ff8a80}.rank-row .mv.new{color:#ffe066}.rank-row .mv.same{color:#aaa}
+  .rank-row.r1{background:linear-gradient(90deg,rgba(255,213,79,.5),rgba(255,160,0,.3));box-shadow:0 0 34px rgba(255,213,79,.6);transform-origin:center;animation:rankin .7s cubic-bezier(.2,1.3,.4,1) backwards,r1pulse 1.6s 1.2s ease-in-out infinite}
+  .rank-row.r1 .rk{animation:crown 1.2s ease-in-out infinite}
+  .rank-row.r2{background:rgba(224,230,239,.26)}.rank-row.r3{background:rgba(255,171,123,.26)}
+  @keyframes rankin{from{opacity:0;transform:translateX(-80px) scale(.85)}to{opacity:1;transform:none}}
+  @keyframes r1pulse{50%{transform:scale(1.035)}}
+  @keyframes crown{50%{transform:translateY(-4px) rotate(-8deg)}}
+  .rank-actions{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:clamp(6px,1.4vh,14px)}
+  .cam-box.cam-hidden{position:fixed!important;left:-10000px!important;top:0!important;width:640px!important;opacity:0;pointer-events:none}
+  .music-float{z-index:120!important}
+  body.in-game .game-chrome{display:none!important}
+  body.in-game .wrap{padding-top:62px}
+  .end-game{display:none;position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:130;padding:8px 16px;font-size:15px;border-radius:999px;background:rgba(20,8,48,.78);color:#fff;border:2px solid rgba(255,255,255,.4);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  .end-game:hover{background:rgba(255,82,82,.85)}
+  body.in-game .end-game{display:block}
+  @media print{.end-game{display:none!important}}
+  .end-modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(5,2,20,.72);padding:20px}
+  .end-modal[hidden]{display:none}
+  .end-modal-box{background:#2a0f63;border:3px solid rgba(255,255,255,.4);border-radius:22px;padding:22px 26px;text-align:center;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  .end-modal-box h3{margin:0 0 6px;font-size:24px}
   .reading-note{text-align:center;font-weight:900;font-size:clamp(16px,3vw,22px);margin:10px 0;color:#ffe066}
   #resultTitle{font-size:clamp(22px,4vw,34px);text-align:center}
   #phase-result .opt{cursor:default}
@@ -240,11 +298,11 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="kahoot-banner">CLASSROOM RACE</div>
-  <h1>教室紙卡答題</h1>
-  <p class="muted">競賽節奏 · 紙卡作答 · 座號排名 · 越快答對分越高</p>
+  <div class="kahoot-banner game-chrome">CLASSROOM RACE</div>
+  <h1 class="game-chrome">教室紙卡答題</h1>
+  <p class="muted game-chrome">競賽節奏 · 紙卡作答 · 座號排名 · 越快答對分越高</p>
 
-  <div class="tabs no-print">
+  <div class="tabs no-print game-chrome">
     <button type="button" data-tab="quiz" aria-selected="true">競賽</button>
     <button type="button" data-tab="scan">鏡頭測試</button>
     <button type="button" data-tab="cards">列印座號卡</button>
@@ -255,7 +313,7 @@
     <div class="hud">
       <span class="chip" id="qProgress">第 0 / 0 題</span>
       <span class="chip" id="phaseLabel">準備中</span>
-      <span class="chip">已偵測 <b id="detectCount">0</b> 人</span>
+      <span class="chip">已作答 <b id="detectCount">0</b> 人</span>
     </div>
     <div class="bar"><i id="qBar"></i></div>
 
@@ -265,6 +323,15 @@
         <label>座號 1～<input type="number" id="seatMax" value="50" min="1" max="50" style="width:70px"></label>
         <label>答題秒數 <input type="number" id="qSeconds" value="15" min="5" max="60" style="width:70px"></label>
         <label>讀題秒數 <input type="number" id="readSeconds" value="5" min="0" max="30" style="width:70px"></label>
+      </div>
+      <div class="row" style="margin:8px 0">
+        <label><input type="checkbox" id="optMusic" checked> 🎵 背景音樂</label>
+        <label><input type="checkbox" id="optAutoNext" checked> ⏭ 公布答案 5 秒後自動下一題</label>
+        <label><input type="checkbox" id="optShowCam"> 📷 競賽中顯示鏡頭畫面（除錯用）</label>
+      </div>
+      <div class="row" style="margin:8px 0">
+        <label>音量 <input type="range" id="musicVol" min="0" max="100" value="40" style="width:110px"></label>
+        <span class="muted" id="musicStatus">音樂檔：bgm.mp3（請放在這個 html 的同一個資料夾）</span>
       </div>
       <div class="row">
         <button type="button" class="primary" id="btnStart">開始一局</button>
@@ -294,14 +361,12 @@
 
     <div id="phase-question" hidden>
       <div class="timer" id="timer">15</div>
-      <p class="muted" style="text-align:center;margin:0" id="quizHint">競賽模式：倒數期間自動掃描 · 依<strong>首次答對</strong>時間計分</p>
       <div class="big-q" id="questionText"></div>
       <div class="q-image-wrap" id="questionImageWrap" hidden>
         <img id="questionImage" alt="題目圖片">
       </div>
       <div class="reading-note" id="readingNote" style="display:none"></div>
       <div class="opts" id="optionsBox"></div>
-      <div class="top5" id="liveTop5"></div>
       <div class="row" style="margin:8px 0">
         <button type="button" class="ok" id="btnFinishEarly">提前結束並計分</button>
         <button type="button" id="btnClearScan">清除本輪讀取</button>
@@ -310,7 +375,8 @@
         <video id="quizVideo" autoplay playsinline webkit-playsinline muted></video>
         <canvas id="quizOverlay"></canvas>
       </div>
-      <h3 style="margin-top:14px">即時讀取 <span class="muted">（越早答對分越高）</span></h3>
+      <h3 style="margin-top:14px">作答狀況 <span class="muted">（只顯示是否已作答，不顯示答案；越早答對分越高）</span></h3>
+      <div class="muted" id="scanMsg" style="margin-bottom:6px"></div>
       <div class="live-list" id="scanLive"></div>
       <h3 style="margin-top:14px">模擬輸入（備援）</h3>
       <div class="row" style="margin-bottom:8px">
@@ -329,9 +395,8 @@
       <div class="row" style="margin:12px 0">
         <button type="button" class="primary" id="btnNext">下一題</button>
         <button type="button" id="btnShowBoard">看總排行</button>
+        <label><input type="checkbox" id="optAutoNext2" checked> 自動下一題</label>
       </div>
-      <h3>本題答對</h3>
-      <div id="resultCorrectList" class="muted"></div>
     </div>
 
     <div id="phase-board" hidden>
@@ -408,6 +473,31 @@
   </section>
 </div>
 
+<button type="button" class="end-game no-print" id="btnEndGame">✕ 結束遊戲</button>
+<div id="endModal" class="end-modal" hidden>
+  <div class="end-modal-box">
+    <h3>結束遊戲？</h3>
+    <p class="muted">會停止掃描並回到準備畫面。</p>
+    <div class="row" style="justify-content:center">
+      <button type="button" id="btnEndCancel">繼續遊戲</button>
+      <button type="button" class="primary" id="btnEndOk">結束遊戲</button>
+    </div>
+  </div>
+</div>
+<div id="phase-rank" hidden>
+  <div class="rank-bg"></div>
+  <div id="rankFx"></div>
+  <div class="rank-inner">
+    <div class="rank-kicker" id="rankSub"></div>
+    <h2 class="rank-title">🏆 目前排名</h2>
+    <div class="rank-list" id="rankList"></div>
+    <div class="rank-actions">
+      <button type="button" class="primary" id="btnRankNext">下一題</button>
+      <label><input type="checkbox" id="optAutoNext3" checked> 自動下一題</label>
+    </div>
+  </div>
+</div>
+<button type="button" class="music-float" id="btnMusicFloat" title="開關背景音樂">🔊</button>
 <script async src="https://docs.opencv.org/5.x/opencv.js"></script>
 <script>
 const DEFAULT_QUESTIONS = [
@@ -486,7 +576,7 @@ function setQuestionImage(url){
 }
 
 let scores = {}, roundData = {}, qIndex = 0, phase = "lobby";
-let readTimerId = null, answering = false;
+let readTimerId = null, answering = false, autoNextTimer = null, rankTimer = null, prevSnap = {}, rankAnimIds = [], livePrev = new Set(), overlayHideAnswer = false;
 let timerId = null, remain = 15, seatMax = 50, camStream = null, detectLoop = null, detector = null;
 let cvReady = false, cvDictionary = null, cvInitError = "", cvDetectorKind = "";
 let questionStartedAt = 0, questionDurationSec = 15;
@@ -705,12 +795,14 @@ function detectMarkersFromVideo(video, overlay){
     ctx.strokeStyle="#00e676";ctx.lineWidth=3;ctx.beginPath();
     m.corners.forEach((p,i)=>{const x=p.x*sx,y=p.y*sy;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
     ctx.closePath();ctx.stroke();
-    ctx.strokeStyle="#ffeb3b";ctx.lineWidth=4;ctx.beginPath();
-    ctx.moveTo(m.corners[0].x*sx,m.corners[0].y*sy);ctx.lineTo(m.corners[1].x*sx,m.corners[1].y*sy);ctx.stroke();
+    if(!overlayHideAnswer){
+      ctx.strokeStyle="#ffeb3b";ctx.lineWidth=4;ctx.beginPath();
+      ctx.moveTo(m.corners[0].x*sx,m.corners[0].y*sy);ctx.lineTo(m.corners[1].x*sx,m.corners[1].y*sy);ctx.stroke();
+    }
     const cx=m.corners.reduce((sum,p)=>sum+p.x,0)/4*sx, cy=m.corners.reduce((sum,p)=>sum+p.y,0)/4*sy;
     ctx.fillStyle="rgba(0,0,0,.65)";ctx.fillRect(cx-48,cy-18,96,36);
     ctx.fillStyle="#fff";ctx.font="bold 16px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText("#"+seat+" → "+answer,cx,cy);
+    ctx.fillText(overlayHideAnswer ? "#"+seat : "#"+seat+" → "+answer,cx,cy);
     return {id:seat,seat,answer,angle:+ang.toFixed(1)};
   });
   return {markers:results,error:null};
@@ -942,8 +1034,13 @@ function ensureScores(){
 }
 function setPhase(name){
   phase = name;
-  ["lobby","question","scan","result","board"].forEach(p => { const el=$("#phase-"+p); if(el) el.hidden = p!==name; });
-  $("#phaseLabel").textContent = {lobby:"準備中",question:"競賽掃描中",scan:"掃描中",result:"看結果",board:"排行榜"}[name]||name;
+  if(name!=="result") cancelAutoNext();
+  if(name!=="rank") cancelRankAuto();
+  overlayHideAnswer = (name==="question");
+  document.body.classList.toggle("in-game", name!=="lobby");
+  if(name==="lobby"){ const m=$("#endModal"); if(m) m.hidden=true; }
+  ["lobby","question","scan","result","rank","board"].forEach(p => { const el=$("#phase-"+p); if(el) el.hidden = p!==name; });
+  $("#phaseLabel").textContent = {lobby:"準備中",question:"競賽掃描中",scan:"掃描中",result:"看結果",rank:"排名",board:"排行榜"}[name]||name;
 }
 function renderProgress(){
   $("#qProgress").textContent = `第 ${qIndex+1} / ${QUESTIONS.length} 題`;
@@ -1002,46 +1099,29 @@ function registerAnswer(seat, answer, manual){
   }
   updateScanLive();
   updateDetectCount();
-  renderLiveTop5();
 }
 
-function renderLiveTop5(){
-  const el = $("#liveTop5"); if(!el) return;
-  const item = QUESTIONS[qIndex];
-  const correctLetter = item ? LETTERS[item.answer] : null;
-  const durMs = questionDurationSec * 1000;
-  const rows = Object.keys(scores).map(Number).map(seat=>{
-    const gain = (answering && correctLetter) ? scoreForSeat(roundData[seat], correctLetter, durMs) : 0;
-    return { seat, total: scores[seat].score + gain, gain, correct: scores[seat].correct + (gain>0?1:0) };
-  }).filter(r=>r.total>0)
-    .sort((a,b)=>b.total-a.total||b.correct-a.correct||a.seat-b.seat).slice(0,5);
-  const medal = ["🥇","🥈","🥉","4","5"];
-  el.innerHTML = `<h3>🏆 即時前 5 名</h3>` + (rows.length
-    ? rows.map((r,i)=>`<div class="top5-row ${i<3?"r"+(i+1):""}"><span class="rk">${medal[i]}</span><span class="nm">${seatLabel(r.seat)}</span><span class="pt">${r.total}${r.gain>0?`<span class="gain">+${r.gain}</span>`:""}</span></div>`).join("")
-    : `<div class="muted">還沒有人得分，快舉卡片搶第一！</div>`);
-}
 
+function liveSeats(){
+  let list = Object.keys(roster).map(Number).filter(n=>n>=1&&n<=seatMax);
+  if(!list.length){ list = []; for(let i=1;i<=seatMax;i++) list.push(i); }
+  Object.keys(roundData).map(Number).forEach(n=>{ if(!list.includes(n)) list.push(n); });
+  return list.sort((a,b)=>a-b);
+}
 function updateScanLive(){
   const el = $("#scanLive"); if(!el) return;
-  const item = QUESTIONS[qIndex];
-  const correctLetter = item ? LETTERS[item.answer] : null;
-  const rows = Object.keys(roundData).map(Number).sort((a,b)=>a-b);
-  if(!rows.length){
-    el.innerHTML = "<div class='muted'>尚未讀到 — 請將答案朝上舉向鏡頭</div>";
-    return;
-  }
-  el.innerHTML = rows.map(s => {
-    const d = roundData[s];
-    const ans = d.answer || "…";
-    let extra = "";
-    if(d.firstCorrectMs != null){
-      extra = ` · 首對 ${(d.firstCorrectMs/1000).toFixed(1)}s`;
-    }else if(d.answer){
-      extra = " · 尚未答對";
-    }
-    const mark = (correctLetter && d.answer === correctLetter) ? " ✓" : "";
-    return `<div><b>${seatLabel(s)}</b> → <b>${ans}</b>${mark}<span class="muted">${extra}</span></div>`;
+  const seats = liveSeats();
+  const done = new Set(seats.filter(s => roundData[s] && roundData[s].answer));
+  const total = seats.length || 1;
+  const tiles = seats.map(s=>{
+    const isDone = done.has(s);
+    const pop = isDone && !livePrev.has(s);
+    const nm = nameOf(s);
+    return `<div class="lt${isDone?" done":""}${pop?" pop":""}" title="${isDone?"已作答":"尚未作答"}"><span class="n">${s}</span>${nm?`<span class="nm">${esc(nm)}</span>`:""}<span class="ck">✓</span></div>`;
   }).join("");
+  livePrev = done;
+  el.innerHTML = `<div class="live-sum"><b>${done.size}</b> / ${seats.length} 人已作答<div class="live-sumbar"><i style="width:${Math.round(done.size/total*100)}%"></i></div></div>`
+    + `<div class="live-grid${seats.length>30?" compact":""}">${tiles}</div>`;
 }
 function updateDetectCount(){
   $("#detectCount").textContent = Object.keys(roundData).filter(s => roundData[s].answer).length;
@@ -1056,10 +1136,14 @@ function scoreForSeat(d, correctLetter, durationMs){
 
 function setShown(el, on){ if(el) el.style.display = on ? "" : "none"; }
 
+function applyCamVisibility(){
+  const box = $("#phase-question .cam-box"); if(!box) return;
+  box.classList.toggle("cam-hidden", !$("#optShowCam").checked);
+}
 function showQuestion(){
   const item=QUESTIONS[qIndex]; if(!item){ showBoard(true); return; }
   clearInterval(readTimerId); clearInterval(timerId);
-  roundData = {}; answering = false;
+  roundData = {}; answering = false; livePrev = new Set();
   updateScanLive(); updateDetectCount(); renderProgress(); setPhase("question");
   fillSimSeats();
   $("#questionText").textContent=item.q;
@@ -1071,11 +1155,10 @@ function showQuestion(){
   questionDurationSec = Math.max(5, +$("#qSeconds").value || 15);
   const rs = parseInt($("#readSeconds").value, 10);
   const readSec = Math.max(0, Math.min(30, isNaN(rs) ? 5 : rs));
-  renderLiveTop5();
 
   if(readSec > 0){
     // 讀題階段：只顯示題目（與圖片），選項與倒數先隱藏
-    setShown($("#optionsBox"), false); setShown($("#timer"), false); setShown($("#quizHint"), false);
+    setShown($("#optionsBox"), false); setShown($("#timer"), false);
     setShown($("#readingNote"), true);
     $("#btnFinishEarly").textContent = "跳過讀題";
     let left = readSec;
@@ -1091,13 +1174,15 @@ function showQuestion(){
 
   // 競賽模式：出題後立刻開鏡頭連續掃描
   const video=$("#quizVideo"), overlay=$("#quizOverlay");
-  const sl=$("#scanLive");
-  if(!cvReady && sl) sl.innerHTML="<div class='muted'>OpenCV 載入中…（可先用下方模擬輸入）</div>";
+  const sl=$("#scanMsg");
+  applyCamVisibility();
+  if(sl) sl.textContent = cvReady ? "" : "OpenCV 載入中…（可先用下方模擬輸入）";
   waitForOpenCV().then(()=>startCamera(video)).catch(err=>{
-    if(sl) sl.innerHTML="<div class='muted'>⚠ 無法自動掃描："+(err.message||err)+"（請用下方模擬輸入，或確認網路後重新整理）</div>";
+    if(sl) sl.textContent="⚠ 無法自動掃描："+(err.message||err)+"（請用下方模擬輸入，或確認網路後重新整理）";
     return false;
   }).then(ok=>{
     if(!ok) return;
+    if(sl) sl.textContent = $("#optShowCam").checked ? "" : "📷 鏡頭掃描中（畫面已隱藏）";
     let lastScanAt = 0;
     const loop=(now)=>{
       if(phase!=="question"||!camStream) return;
@@ -1121,7 +1206,7 @@ function revealOptions(){
   clearInterval(readTimerId);
   answering = true;
   setShown($("#readingNote"), false);
-  setShown($("#optionsBox"), true); setShown($("#timer"), true); setShown($("#quizHint"), true);
+  setShown($("#optionsBox"), true); setShown($("#timer"), true);
   $("#btnFinishEarly").textContent = "提前結束並計分";
   remain = questionDurationSec;
   questionStartedAt = performance.now();
@@ -1133,7 +1218,6 @@ function revealOptions(){
     if(remain<=5) $("#timer").classList.add("hot");
     if(remain<=0){ clearInterval(timerId); gradeRound(); }
   },1000);
-  renderLiveTop5();
 }
 
 function gradeRound(){
@@ -1141,6 +1225,8 @@ function gradeRound(){
   const item=QUESTIONS[qIndex], correctLetter=LETTERS[item.answer];
   const durationMs = questionDurationSec * 1000;
   const gained = [];
+  prevSnap = {};
+  Object.keys(scores).forEach(k=>{ prevSnap[k] = { score: scores[k].score, correct: scores[k].correct }; });
   Object.keys(roundData).map(Number).forEach(seat=>{
     const d = roundData[seat];
     const pts = scoreForSeat(d, correctLetter, durationMs);
@@ -1160,9 +1246,7 @@ function gradeRound(){
     const L=LETTERS[i];
     return `<div class="opt ${L.toLowerCase()} ${L===correctLetter?"correct":"wrong"}"><span class="k">${L}</span><span>${t}（${counts[L]}人）</span></div>`;
   }).join("");
-  $("#resultCorrectList").innerHTML = gained.length
-    ? gained.map(g=>`${seatLabel(g.seat)} +${g.pts}（首對 ${((g.t||0)/1000).toFixed(1)}s）`).join("　")
-    : "本題沒有人答對（或尚未掃到）";
+  startAutoNext();
 }
 
 function showBoard(final=false){
@@ -1177,7 +1261,8 @@ $("#btnResetScores").onclick=()=>{ scores={}; ensureScores(); alert("分數已�
 $("#btnFinishEarly").onclick=()=>{ if(!answering){ revealOptions(); return; } clearInterval(timerId); gradeRound(); };
 $("#btnClearScan").onclick=()=>{ roundData={}; updateScanLive(); updateDetectCount(); };
 $("#btnSimAdd").onclick=()=>registerAnswer($("#simSeat").value, $("#simAns").value, true);
-$("#btnNext").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
+$("#btnNext").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else showRank(); };
+$("#btnRankNext").onclick=()=>{ cancelRankAuto(); qIndex++; showQuestion(); };
 $("#btnShowBoard").onclick=()=>showBoard(false);
 $("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
 $("#btnNewGame").onclick=()=>{ clearInterval(readTimerId); clearInterval(timerId); answering=false; stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
@@ -1273,6 +1358,159 @@ $("#btnRosterTemplate").onclick = ()=>{
   a.download="roster-template.csv"; a.click();
 };
 try{ const saved = JSON.parse(localStorage.getItem("classroomRoster")||"null"); if(saved && Object.keys(saved).length) applyRoster(saved,false); }catch(e){}
+
+// ===== 背景音樂 & 自動下一題 =====
+const bgm = new Audio(); bgm.loop = true; bgm.preload = "auto"; bgm.volume = 0.4;
+const MUSIC_FILE = "bgm.mp3";
+let musicOn = true, autoNext = true, musicLoaded = true;
+bgm.src = MUSIC_FILE;
+try{
+  const o = JSON.parse(localStorage.getItem("classroomOpts")||"null");
+  if(o){ musicOn = o.musicOn!==false; autoNext = o.autoNext!==false; if(typeof o.vol==="number"){ bgm.volume=o.vol; $("#musicVol").value=Math.round(o.vol*100); } }
+}catch(e){}
+function saveOpts(){ try{ localStorage.setItem("classroomOpts", JSON.stringify({musicOn, autoNext, vol:bgm.volume})); }catch(e){} }
+function syncOptUI(){
+  $("#optMusic").checked = musicOn;
+  $("#optAutoNext").checked = autoNext; $("#optAutoNext2").checked = autoNext; $("#optAutoNext3").checked = autoNext;
+  $("#btnMusicFloat").textContent = musicOn ? "🔊" : "🔇";
+}
+function setMusicStatus(t){ $("#musicStatus").textContent = t; }
+function playMusic(){
+  if(!musicOn || !musicLoaded) return;
+  const r = bgm.play();
+  if(r && r.catch) r.catch(()=> setMusicStatus("瀏覽器擋住自動播放，請點一下 🔊 開始"));
+}
+function setMusic(on){
+  musicOn = on; syncOptUI(); saveOpts();
+  if(on){ if(!musicLoaded) setMusicStatus("找不到 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); else playMusic(); } else bgm.pause();
+}
+$("#optMusic").onchange = e => setMusic(e.target.checked);
+$("#btnMusicFloat").onclick = () => setMusic(!musicOn);
+$("#musicVol").oninput = e => { bgm.volume = (+e.target.value)/100; saveOpts(); };
+bgm.onerror = () => { musicLoaded = false; setMusicStatus("找不到或無法播放 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); };
+bgm.oncanplay = () => { musicLoaded = true; setMusicStatus("音樂檔：" + MUSIC_FILE); };
+$("#btnStart").addEventListener("click", playMusic);
+$("#btnNewGame").addEventListener("click", ()=>{ bgm.pause(); bgm.currentTime = 0; cancelRankAuto(); });
+
+function rankOrder(getter){
+  const arr = Object.keys(scores).map(Number).map(seat=>{ const v=getter(seat); return { seat, score:v.score, correct:v.correct }; })
+    .filter(r=>r.score>0)
+    .sort((a,b)=>b.score-a.score||b.correct-a.correct||a.seat-b.seat);
+  const pos = {}; arr.forEach((r,i)=>{ pos[r.seat]=i+1; });
+  return { arr, pos };
+}
+function clearRankFx(){ const fx=$("#rankFx"); if(fx) fx.innerHTML=""; }
+function burstConfetti(n){
+  const fx=$("#rankFx"); if(!fx) return;
+  const colors=["#ffd54f","#ff5252","#69f0ae","#40c4ff","#e040fb","#fff"];
+  for(let i=0;i<n;i++){
+    const c=document.createElement("i"); c.className="cf";
+    c.style.left=(Math.random()*100)+"%";
+    c.style.background=colors[i%colors.length];
+    c.style.setProperty("--dx",((Math.random()-.5)*160)+"px");
+    c.style.animationDuration=(2.2+Math.random()*2.4)+"s";
+    c.style.animationDelay=(Math.random()*.8)+"s";
+    c.style.transform="rotate("+Math.floor(Math.random()*360)+"deg)";
+    fx.appendChild(c);
+    setTimeout(()=>c.remove(), 6000);
+  }
+}
+function cancelRankAuto(){
+  clearInterval(rankTimer); rankTimer = null;
+  rankAnimIds.forEach(clearTimeout); rankAnimIds = [];
+  clearRankFx();
+  const b = $("#btnRankNext"); if(b) b.textContent = "下一題";
+}
+function startRankAuto(afterMs){
+  clearInterval(rankTimer);
+  if(!autoNext) return;
+  let left = Math.max(3, Math.round(afterMs/1000) + 3);
+  const b = $("#btnRankNext");
+  b.textContent = "下一題（" + left + "）";
+  rankTimer = setInterval(()=>{
+    left--;
+    if(left<=0){ cancelRankAuto(); if(phase==="rank") b.click(); }
+    else b.textContent = "下一題（" + left + "）";
+  },1000);
+}
+function showRank(){
+  setPhase("rank");
+  const cur = rankOrder(seat => scores[seat]);
+  const prev = rankOrder(seat => prevSnap[seat] || {score:0,correct:0});
+  const top = cur.arr.slice(0,5);
+  clearRankFx();
+  $("#rankSub").textContent = `第 ${qIndex+1} / ${QUESTIONS.length} 題結束`;
+  const list = $("#rankList");
+  const medal = ["🥇","🥈","🥉","4","5"];
+  const STEP = 520, COUNT = 900;
+  if(!top.length){
+    list.innerHTML = '<div class="muted" style="text-align:center">還沒有人得分</div>';
+    startRankAuto(0); return;
+  }
+  list.innerHTML = top.map((r,i)=>{
+    const before = (prevSnap[r.seat]||{score:0}).score;
+    const gain = r.score - before;
+    const pr = prev.pos[r.seat], nr = i+1;
+    let mv;
+    if(!pr) mv = '<span class="mv new">NEW</span>';
+    else if(pr>nr) mv = `<span class="mv up">▲${pr-nr}</span>`;
+    else if(pr<nr) mv = `<span class="mv down">▼${nr-pr}</span>`;
+    else mv = '<span class="mv same">－</span>';
+    const delay = (top.length-1-i)*STEP;   // 由第 5 名先出現，最後揭曉第 1 名
+    return `<div class="rank-row ${i<3?"r"+(i+1):""}" style="animation-delay:${delay}ms">
+      <span class="rk">${medal[i]}</span><span class="nm">${seatLabel(r.seat)}</span>
+      ${mv}<span class="gain">${gain>0?"+"+gain:""}</span><span class="pt" data-from="${before}" data-to="${r.score}" data-delay="${delay}">${before}</span></div>`;
+  }).join("");
+  rankAnimIds.forEach(clearTimeout); rankAnimIds = [];
+  $$(".pt", list).forEach(el=>{
+    const from=+el.dataset.from, to=+el.dataset.to, delay=+el.dataset.delay;
+    rankAnimIds.push(setTimeout(()=>{
+      const t0 = performance.now();
+      const tick = now=>{
+        if(phase!=="rank") return;
+        const k = Math.min(1,(now-t0)/COUNT), e = 1-Math.pow(1-k,3);
+        el.textContent = Math.round(from + (to-from)*e);
+        if(k<1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, delay + 250));
+  });
+  rankAnimIds.push(setTimeout(()=>{ if(phase==="rank") burstConfetti(70); }, (top.length-1)*STEP + 350));
+  startRankAuto((top.length-1)*STEP + COUNT + 400);
+}
+
+function nextBtnBase(){ return "下一題"; }
+function cancelAutoNext(){
+  clearInterval(autoNextTimer); autoNextTimer = null;
+  const b = $("#btnNext"); if(b) b.textContent = nextBtnBase();
+}
+function startAutoNext(){
+  cancelAutoNext();
+  if(!autoNext) return;
+  let left = 5;
+  const b = $("#btnNext");
+  b.textContent = nextBtnBase() + "（" + left + "）";
+  autoNextTimer = setInterval(()=>{
+    left--;
+    if(left<=0){ cancelAutoNext(); if(phase==="result") b.click(); }
+    else b.textContent = nextBtnBase() + "（" + left + "）";
+  },1000);
+}
+function setAutoNext(on){
+  autoNext = on; syncOptUI(); saveOpts();
+  if(!on){ cancelAutoNext(); cancelRankAuto(); }
+  else if(phase==="result") startAutoNext();
+  else if(phase==="rank") startRankAuto(0);
+}
+$("#optAutoNext").onchange = e => setAutoNext(e.target.checked);
+$("#optAutoNext2").onchange = e => setAutoNext(e.target.checked);
+$("#optAutoNext3").onchange = e => setAutoNext(e.target.checked);
+$("#optShowCam").onchange = applyCamVisibility;
+$("#btnEndGame").onclick = ()=>{ $("#endModal").hidden = false; };
+$("#btnEndCancel").onclick = ()=>{ $("#endModal").hidden = true; };
+$("#btnEndOk").onclick = ()=>{ $("#endModal").hidden = true; $("#btnNewGame").click(); };
+syncOptUI();
+applyCamVisibility();
 
 setPhase("lobby");
 </script>
