@@ -562,7 +562,7 @@
         <label class="tog"><input type="checkbox" id="optAutoNext" checked><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-skip"/></svg> 自動下一題</span><small>公布答案 5 秒後自動前進</small></span></label>
         <label class="tog"><input type="checkbox" id="optShowCam"><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-camera"/></svg> 顯示鏡頭畫面</span><small>除錯用，正式上課不用開</small></span></label>
       </div>
-      <div class="vol-row"><svg class="ic"><use href="#i-vol"/></svg><input type="range" id="musicVol" min="0" max="100" value="40"><span class="muted" id="musicStatus">音樂檔：bgm.mp3　／　開始音：start.mp3（皆放在 html 旁邊）</span></div>
+      <div class="vol-row"><svg class="ic"><use href="#i-vol"/></svg><input type="range" id="musicVol" min="0" max="100" value="40"><span class="muted" id="musicStatus">大廳：bgm.mp3　／　競賽：start.mp3（皆放在 html 旁邊）</span></div>
 
       <button type="button" class="start-btn" id="btnStart">開始一局</button>
       <div style="text-align:center"><button type="button" class="link-btn" id="btnResetScores">清空分數</button></div>
@@ -1666,51 +1666,92 @@ $("#btnRosterTemplate").onclick = ()=>{
 try{ const saved = JSON.parse(localStorage.getItem("classroomRoster")||"null"); if(saved && Object.keys(saved).length) applyRoster(saved,false); }catch(e){}
 
 // ===== 背景音樂 & 自動下一題 =====
-const bgm = new Audio(); bgm.loop = true; bgm.preload = "auto"; bgm.volume = 0.4;
+// lobby：bgm.mp3　／　競賽中：start.mp3（進入遊戲時切換）
 const MUSIC_FILE = "bgm.mp3";
-const START_MUSIC_FILE = "start.mp3"; // 競賽開始音效（放在 html 旁邊）
-const startSfx = new Audio(); startSfx.preload = "auto"; startSfx.volume = 0.7;
-startSfx.src = START_MUSIC_FILE;
-let musicOn = true, autoNext = true, musicLoaded = true, startSfxLoaded = true;
-bgm.src = MUSIC_FILE;
+const START_MUSIC_FILE = "start.mp3";
+const lobbyBgm = new Audio(); lobbyBgm.loop = true; lobbyBgm.preload = "auto";
+const gameBgm = new Audio(); gameBgm.loop = true; gameBgm.preload = "auto";
+lobbyBgm.src = MUSIC_FILE;
+gameBgm.src = START_MUSIC_FILE;
+let musicOn = true, autoNext = true;
+let lobbyLoaded = true, gameLoaded = true;
+let currentTrack = "lobby"; // "lobby" | "game"
+let musicVol = 0.4;
+lobbyBgm.volume = musicVol;
+gameBgm.volume = musicVol;
 try{
   const o = JSON.parse(localStorage.getItem("classroomOpts")||"null");
-  if(o){ musicOn = o.musicOn!==false; autoNext = o.autoNext!==false; if(typeof o.vol==="number"){ bgm.volume=o.vol; $("#musicVol").value=Math.round(o.vol*100); } }
+  if(o){
+    musicOn = o.musicOn!==false;
+    autoNext = o.autoNext!==false;
+    if(typeof o.vol==="number"){
+      musicVol = o.vol;
+      lobbyBgm.volume = musicVol;
+      gameBgm.volume = musicVol;
+      $("#musicVol").value = Math.round(musicVol*100);
+    }
+  }
 }catch(e){}
-function saveOpts(){ try{ localStorage.setItem("classroomOpts", JSON.stringify({musicOn, autoNext, vol:bgm.volume})); }catch(e){} }
+function saveOpts(){ try{ localStorage.setItem("classroomOpts", JSON.stringify({musicOn, autoNext, vol:musicVol})); }catch(e){} }
 function syncOptUI(){
   $("#optMusic").checked = musicOn;
   $("#optAutoNext").checked = autoNext; $("#optAutoNext2").checked = autoNext; $("#optAutoNext3").checked = autoNext;
   $("#btnMusicFloat").innerHTML = ico(musicOn ? "vol" : "mute");
 }
 function setMusicStatus(t){ $("#musicStatus").textContent = t; }
+function activeAudio(){ return currentTrack === "game" ? gameBgm : lobbyBgm; }
+function activeLoaded(){ return currentTrack === "game" ? gameLoaded : lobbyLoaded; }
 function playMusic(){
-  if(!musicOn || !musicLoaded) return;
-  const r = bgm.play();
+  if(!musicOn) return;
+  const a = activeAudio();
+  if(!activeLoaded()) return;
+  const r = a.play();
   if(r && r.catch) r.catch(()=> setMusicStatus("瀏覽器擋住自動播放，請點一下右下角的音樂按鈕開始"));
 }
-/** 競賽真正開始時播放（倒數結束進入第一題） */
-function playStartMusic(){
-  if(!musicOn || !startSfxLoaded) return;
-  try{
-    startSfx.currentTime = 0;
-    const r = startSfx.play();
-    if(r && r.catch) r.catch(()=>{});
-  }catch(e){}
+/** 切換曲目：lobby=大廳 bgm.mp3，game=競賽 start.mp3 */
+function switchTrack(track){
+  if(track !== "lobby" && track !== "game") return;
+  if(currentTrack === track){
+    if(musicOn) playMusic();
+    return;
+  }
+  try{ lobbyBgm.pause(); }catch(e){}
+  try{ gameBgm.pause(); }catch(e){}
+  currentTrack = track;
+  const a = activeAudio();
+  try{ a.currentTime = 0; }catch(e){}
+  if(musicOn) playMusic();
+  setMusicStatus(
+    currentTrack === "game"
+      ? "播放中：start.mp3（競賽）"
+      : "播放中：bgm.mp3（大廳）　／　競賽用 start.mp3"
+  );
 }
 function setMusic(on){
   musicOn = on; syncOptUI(); saveOpts();
-  if(on){ if(!musicLoaded) setMusicStatus("找不到 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); else playMusic(); } else bgm.pause();
+  if(on){
+    if(!activeLoaded()){
+      setMusicStatus("找不到 " + (currentTrack==="game"?START_MUSIC_FILE:MUSIC_FILE) + "，請把它放在 html 旁邊後重新整理");
+    }else playMusic();
+  }else{
+    try{ lobbyBgm.pause(); }catch(e){}
+    try{ gameBgm.pause(); }catch(e){}
+  }
 }
 $("#optMusic").onchange = e => setMusic(e.target.checked);
 $("#btnMusicFloat").onclick = () => setMusic(!musicOn);
-$("#musicVol").oninput = e => { bgm.volume = (+e.target.value)/100; saveOpts(); };
-bgm.onerror = () => { musicLoaded = false; setMusicStatus("找不到或無法播放 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); };
-bgm.oncanplay = () => { musicLoaded = true; setMusicStatus("音樂檔：" + MUSIC_FILE + "　／　開始音：" + START_MUSIC_FILE); };
-startSfx.onerror = () => { startSfxLoaded = false; };
-startSfx.oncanplay = () => { startSfxLoaded = true; };
-$("#btnStart").addEventListener("click", playMusic);
-$("#btnNewGame").addEventListener("click", ()=>{ cancelRankAuto(); });
+$("#musicVol").oninput = e => {
+  musicVol = (+e.target.value)/100;
+  lobbyBgm.volume = musicVol;
+  gameBgm.volume = musicVol;
+  saveOpts();
+};
+lobbyBgm.onerror = () => { lobbyLoaded = false; setMusicStatus("找不到或無法播放 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); };
+gameBgm.onerror = () => { gameLoaded = false; setMusicStatus("找不到或無法播放 " + START_MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); };
+lobbyBgm.oncanplay = () => { lobbyLoaded = true; if(currentTrack==="lobby") setMusicStatus("播放中：bgm.mp3（大廳）　／　競賽用 start.mp3"); };
+gameBgm.oncanplay = () => { gameLoaded = true; };
+$("#btnStart").addEventListener("click", ()=>{ switchTrack("lobby"); playMusic(); });
+$("#btnNewGame").addEventListener("click", ()=>{ cancelRankAuto(); switchTrack("lobby"); });
 // 進入網頁就嘗試播放；若被瀏覽器擋住，第一次點擊/觸碰/按鍵時自動開始
 {
   const unlock = () => {
@@ -1719,7 +1760,7 @@ $("#btnNewGame").addEventListener("click", ()=>{ cancelRankAuto(); });
   };
   ["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev, unlock, true));
   if(musicOn){
-    const r = bgm.play();
+    const r = lobbyBgm.play();
     if(r && r.catch) r.catch(()=>{ /* 等待第一次互動 */ });
   }
 }
@@ -1771,7 +1812,7 @@ function startCountdown(){
     else{
       clearInterval(introTimer); introTimer=null;
       qIndex=0;
-      playStartMusic(); // 競賽開始音效
+      switchTrack("game"); // 進入競賽：換成 start.mp3
       showQuestion();
     }
   },1000);
