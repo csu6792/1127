@@ -223,6 +223,49 @@
   .rank-actions{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:clamp(6px,1.4vh,14px)}
   .cam-box.cam-hidden{position:fixed!important;left:-10000px!important;top:0!important;width:640px!important;opacity:0;pointer-events:none}
   .music-float{z-index:120!important}
+  body.in-lobby #tab-quiz .hud,body.in-lobby #tab-quiz .bar{display:none}
+  .sec{display:flex;align-items:center;gap:10px;margin:22px 0 12px;font-size:15px;letter-spacing:.2em;color:#ffe066;font-weight:900}
+  .sec::after{content:"";flex:1;height:2px;background:var(--line);border-radius:2px}
+  .sec .pill{order:2;letter-spacing:0;color:#fff}
+  .rule-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .rule{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 8px;text-align:center;background:rgba(0,0,0,.28);border:2px solid var(--line);border-radius:18px}
+  .rule em{display:grid;place-items:center;width:52px;height:52px;margin-bottom:4px;border-radius:16px;font-style:normal;font-size:28px;color:#fff;background:linear-gradient(145deg,var(--g1),var(--g2));box-shadow:0 4px 0 rgba(0,0,0,.28)}
+  .rule b{font-size:clamp(15px,2.4vw,19px);font-weight:900}
+  .rule span{font-size:12px;opacity:.75;font-weight:700}
+  .steppers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .stepper-card{padding:10px 10px 12px;text-align:center;background:rgba(0,0,0,.28);border:2px solid var(--line);border-radius:18px}
+  .stepper-card .sl{display:block;margin-bottom:6px;font-size:13px;font-weight:800;opacity:.85}
+  .stepper{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .stepper button{flex:none;width:40px;height:40px;padding:0;border-radius:12px;font-size:22px;line-height:1;background:linear-gradient(180deg,#8a5cff,#5e35b1);box-shadow:0 4px 0 rgba(0,0,0,.3)}
+  .stepper button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+  .stepper input{width:100%;min-width:0;padding:4px 0;text-align:center;font-size:26px;font-weight:900;background:transparent;border:0;-moz-appearance:textfield}
+  .stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  .toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:10px}
+  .tog{position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;background:rgba(0,0,0,.28);border:2px solid var(--line);border-radius:18px;transition:border-color .2s,background .2s}
+  .tog input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;background:transparent;border:0}
+  .tog .sw{position:relative;flex:none;width:48px;height:28px;border-radius:999px;background:rgba(255,255,255,.22);transition:background .25s}
+  .tog .sw::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:transform .25s}
+  .tog input:checked ~ .sw{background:#2ecc71}
+  .tog input:checked ~ .sw::after{transform:translateX(20px)}
+  .tog:has(input:checked){border-color:rgba(105,240,174,.75);background:rgba(46,204,113,.12)}
+  .tog .tt{display:flex;flex-direction:column;line-height:1.3;font-weight:900;font-size:15px}
+  .tog .tt small{font-size:12px;font-weight:700;opacity:.7}
+  .vol-row{display:flex;align-items:center;gap:12px;margin-top:10px;padding:10px 16px;background:rgba(0,0,0,.2);border-radius:16px;font-size:20px}
+  .vol-row input[type=range]{flex:1;min-width:80px;max-width:220px;height:28px;padding:0;background:transparent;border:0;accent-color:#ffd54f}
+  .vol-row .muted{font-size:12px}
+  .start-btn{display:block;margin:26px auto 8px;padding:16px clamp(44px,9vw,92px);font-size:clamp(22px,4.6vw,34px);font-weight:900;color:#fff;border-radius:999px;background:linear-gradient(180deg,#ff6b6b,#e0194a);box-shadow:0 7px 0 #8a0f30,0 0 30px rgba(255,64,100,.5);animation:gopulse 1.8s ease-in-out infinite}
+  .start-btn:active{transform:translateY(5px);box-shadow:0 2px 0 #8a0f30}
+  .link-btn{padding:6px 10px;font-size:14px;opacity:.7;text-decoration:underline;background:transparent;border:0}
+  .gcard{margin-bottom:10px;overflow:hidden;background:rgba(0,0,0,.28);border:2px solid var(--line);border-radius:18px}
+  .gcard summary{display:flex;align-items:center;gap:10px;padding:14px 16px;font-weight:900;cursor:pointer;list-style:none}
+  .gcard summary::-webkit-details-marker{display:none}
+  .gcard summary::after{content:"›";margin-left:auto;font-size:24px;line-height:1;transition:transform .2s}
+  .gcard[open] summary::after{transform:rotate(90deg)}
+  .gcard .gbody{padding:0 16px 16px}
+  .pill{max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 11px;font-size:12px;font-weight:800;background:rgba(255,255,255,.16);border-radius:999px}
+  .filebtn{position:relative;display:inline-flex;align-items:center;padding:12px 18px;cursor:pointer;font-weight:900;border-radius:12px;background:linear-gradient(180deg,#8a5cff,#5e35b1);box-shadow:0 4px 0 rgba(0,0,0,.3)}
+  .filebtn input{position:absolute;inset:0;width:100%;height:100%;padding:0;opacity:0;cursor:pointer}
+  @media(max-width:520px){.rule-tiles,.steppers{gap:8px}.rule span{display:none}.stepper{flex-wrap:wrap;justify-content:center;gap:4px}.stepper input{order:-1;flex:0 0 100%;font-size:28px}.stepper button{width:34px;height:36px}}
   .ic{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
   .medal{display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1.5em;border-radius:50%;font-size:.78em;font-weight:900;color:#2b1a00;background:linear-gradient(145deg,var(--m1,#7e57c2),var(--m2,#4527a0));box-shadow:inset 0 -3px 0 rgba(0,0,0,.22),0 2px 6px rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.55)}
   .medal.m1{--m1:#ffe27a;--m2:#f5a300}.medal.m2{--m1:#f2f5fa;--m2:#a8b3c4}.medal.m3{--m1:#ffc29a;--m2:#c9702f}
@@ -389,45 +432,55 @@
     <div class="bar"><i id="qBar"></i></div>
 
     <div id="phase-lobby">
-      <p>競賽模式：出題後<strong>立刻自動掃描</strong>。答對且越早被讀到，分數越高（基礎 500 + 速度最高 500）。</p>
-      <div class="row" style="margin:12px 0">
-        <label>座號 1～<input type="number" id="seatMax" value="50" min="1" max="50" style="width:70px"></label>
-        <label>答題秒數 <input type="number" id="qSeconds" value="15" min="5" max="60" style="width:70px"></label>
-        <label>讀題秒數 <input type="number" id="readSeconds" value="5" min="0" max="30" style="width:70px"></label>
+      <div class="rule-tiles">
+        <div class="rule"><em style="--g1:#ff7aa8;--g2:#d81b60"><svg class="ic"><use href="#i-card"/></svg></em><b>舉牌作答</b><span>鏡頭自動掃描</span></div>
+        <div class="rule"><em style="--g1:#69f0ae;--g2:#00897b"><svg class="ic"><use href="#i-trophy"/></svg></em><b>答對 +500</b><span>基礎分</span></div>
+        <div class="rule"><em style="--g1:#ffd54f;--g2:#f57c00"><svg class="ic"><use href="#i-bolt"/></svg></em><b>越快越高分</b><span>速度分最高 +500</span></div>
       </div>
-      <div class="row" style="margin:8px 0">
-        <label><input type="checkbox" id="optMusic" checked> <svg class="ic"><use href="#i-music"/></svg> 背景音樂</label>
-        <label><input type="checkbox" id="optAutoNext" checked> <svg class="ic"><use href="#i-skip"/></svg> 公布答案 5 秒後自動下一題</label>
-        <label><input type="checkbox" id="optShowCam"> <svg class="ic"><use href="#i-camera"/></svg> 競賽中顯示鏡頭畫面（除錯用）</label>
+
+      <h3 class="sec">遊戲設定</h3>
+      <div class="steppers">
+        <div class="stepper-card"><span class="sl">答題時間（秒）</span>
+          <div class="stepper" data-step="5"><button type="button">−</button><input type="number" id="qSeconds" value="15" min="5" max="60"><button type="button">+</button></div></div>
+        <div class="stepper-card"><span class="sl">讀題時間（秒）</span>
+          <div class="stepper" data-step="1"><button type="button">−</button><input type="number" id="readSeconds" value="5" min="0" max="30"><button type="button">+</button></div></div>
+        <div class="stepper-card"><span class="sl">座號上限（人）</span>
+          <div class="stepper" data-step="1"><button type="button">−</button><input type="number" id="seatMax" value="50" min="1" max="50"><button type="button">+</button></div></div>
       </div>
-      <div class="row" style="margin:8px 0">
-        <label>音量 <input type="range" id="musicVol" min="0" max="100" value="40" style="width:110px"></label>
-        <span class="muted" id="musicStatus">音樂檔：bgm.mp3（請放在這個 html 的同一個資料夾）</span>
+      <div class="toggles">
+        <label class="tog"><input type="checkbox" id="optMusic" checked><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-music"/></svg> 背景音樂</span><small>進入網頁後點一下即開始播放</small></span></label>
+        <label class="tog"><input type="checkbox" id="optAutoNext" checked><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-skip"/></svg> 自動下一題</span><small>公布答案 5 秒後自動前進</small></span></label>
+        <label class="tog"><input type="checkbox" id="optShowCam"><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-camera"/></svg> 顯示鏡頭畫面</span><small>除錯用，正式上課不用開</small></span></label>
       </div>
-      <div class="row">
-        <button type="button" class="primary" id="btnStart">開始一局</button>
-        <button type="button" id="btnResetScores">清空分數</button>
-      </div>
-      <div class="import-box">
-        <h3 style="margin-top:0">匯入題目（JSON）</h3>
-        <p class="muted">支援題目文字、四個選項、正解、選用圖片（網址或 data URL）。</p>
-        <div class="row">
-          <input type="file" id="importFile" accept=".json,application/json" style="max-width:220px">
-          <button type="button" id="btnLoadSample">載入示範題</button>
-          <button type="button" id="btnDlTemplate">下載範本</button>
+      <div class="vol-row"><svg class="ic"><use href="#i-vol"/></svg><input type="range" id="musicVol" min="0" max="100" value="40"><span class="muted" id="musicStatus">音樂檔：bgm.mp3（放在這個 html 旁邊）</span></div>
+
+      <button type="button" class="start-btn" id="btnStart">開始一局</button>
+      <div style="text-align:center"><button type="button" class="link-btn" id="btnResetScores">清空分數</button></div>
+
+      <h3 class="sec">題庫與名單</h3>
+      <details class="gcard">
+        <summary><svg class="ic"><use href="#i-list"/></svg> 題庫 <span class="pill" id="importStatus">內建題目</span></summary>
+        <div class="gbody">
+          <p class="muted">可匯入 JSON 題庫：題目文字、四個選項、正解，也可以加圖片（網址或 data URL）。</p>
+          <div class="row">
+            <label class="filebtn">選擇題庫檔<input type="file" id="importFile" accept=".json,application/json"></label>
+            <button type="button" id="btnLoadSample">載入示範題</button>
+            <button type="button" id="btnDlTemplate">下載範本</button>
+          </div>
         </div>
-        <div class="import-status muted" id="importStatus">目前使用內建題目</div>
-      </div>
-      <div class="import-box">
-        <h3 style="margin-top:0">學生名單（CSV / TXT / JSON）</h3>
-        <p class="muted">每行「座號,姓名」；或只放姓名（一行一人，依序為 1、2、3…）。上傳後排行榜、即時讀取與卡片都會顯示姓名。</p>
-        <div class="row">
-          <input type="file" id="rosterFile" accept=".csv,.txt,.json,text/csv,text/plain,application/json" style="max-width:220px">
-          <button type="button" id="btnRosterTemplate">下載範本</button>
-          <button type="button" id="btnRosterClear">清除名單</button>
+      </details>
+      <details class="gcard">
+        <summary><svg class="ic"><use href="#i-users"/></svg> 學生名單 <span class="pill" id="rosterStatus">尚未上傳（顯示座號）</span></summary>
+        <div class="gbody">
+          <p class="muted">每行「座號,姓名」，或只放姓名（一行一人，依序為 1、2、3…）。上傳後，排名、作答狀況和座號卡都會顯示姓名。</p>
+          <p class="muted" id="rosterNote" style="color:#ffe066"></p>
+          <div class="row">
+            <label class="filebtn">選擇名單檔<input type="file" id="rosterFile" accept=".csv,.txt,.json,text/csv,text/plain,application/json"></label>
+            <button type="button" id="btnRosterTemplate">下載範本</button>
+            <button type="button" id="btnRosterClear">清除名單</button>
+          </div>
         </div>
-        <div class="import-status muted" id="rosterStatus">尚未上傳名單（顯示座號）</div>
-      </div>
+      </details>
     </div>
 
     <div id="phase-question" hidden>
@@ -446,16 +499,17 @@
         <video id="quizVideo" autoplay playsinline webkit-playsinline muted></video>
         <canvas id="quizOverlay"></canvas>
       </div>
-      <h3 style="margin-top:14px">作答狀況 <span class="muted">（只顯示是否已作答，不顯示答案；越早答對分越高）</span></h3>
+      <h3 class="sec">作答狀況 <span class="pill">答案公布前保密</span></h3>
       <div class="muted" id="scanMsg" style="margin-bottom:6px"></div>
       <div class="live-list" id="scanLive"></div>
-      <h3 style="margin-top:14px">模擬輸入（備援）</h3>
+      <details class="gcard" style="margin-top:14px"><summary>備援輸入 <span class="pill">掃不到時使用</span></summary><div class="gbody">
       <div class="row" style="margin-bottom:8px">
         <select id="simSeat"></select>
         <select id="simAns"><option>A</option><option>B</option><option>C</option><option>D</option></select>
         <button type="button" id="btnSimAdd">加入</button>
       </div>
       <div class="sim-grid" id="simQuick"></div>
+      </div></details>
     </div>
 
     <div id="phase-scan" hidden></div>
@@ -657,9 +711,9 @@ function loadQuestionBank(data){
   if(seconds && seconds >= 5 && $("#qSeconds")) $("#qSeconds").value = seconds;
   const status = $("#importStatus");
   if(status){
-    status.textContent = (title ? "「"+title+"」· " : "") + "已載入 "+QUESTIONS.length+" 題" +
-      (QUESTIONS.some(x=>x.image) ? "（含看圖題）" : "");
-    status.style.color = "var(--ok)";
+    status.textContent = "已載入 "+QUESTIONS.length+" 題" + (QUESTIONS.some(x=>x.image) ? "（含圖）" : "");
+    status.title = (title ? "「"+title+"」" : "") + status.textContent;
+    status.style.color = "#7dff8a";
   }
 }
 
@@ -739,13 +793,15 @@ function applyRoster(obj, persist=true){
   const st = $("#rosterStatus");
   if(st){
     const n = Object.keys(roster).length;
-    if(!n){ st.textContent = "尚未上傳名單（顯示座號）"; st.style.color = ""; }
+    const note = $("#rosterNote");
+    if(!n){ st.textContent = "尚未上傳（顯示座號）"; st.style.color = ""; if(note) note.textContent = ""; }
     else{
       const max = Math.max(1, Math.min(50, +$("#seatMax").value||50));
       const missing = []; for(let i=1;i<=max;i++) if(!roster[i]) missing.push(i);
-      st.textContent = `已載入 ${n} 位學生` + (dropped ? `（座號超過 50 的 ${dropped} 筆已略過）` : "") +
-        (missing.length ? `；座號 ${missing.slice(0,8).join("、")}${missing.length>8?" 等":""} 沒有姓名，會顯示座號` : "");
-      st.style.color = "var(--ok)";
+      st.textContent = `已載入 ${n} 位`;
+      if(note) note.textContent = (dropped ? `座號超過 50 的 ${dropped} 筆已略過。` : "") +
+        (missing.length ? `座號 ${missing.slice(0,8).join("、")}${missing.length>8?" 等":""} 沒有姓名，會顯示座號。` : "");
+      st.style.color = "#7dff8a";
     }
   }
   if(typeof fillSimSeats==="function" && phase==="question") fillSimSeats();
@@ -1147,6 +1203,7 @@ function setPhase(name){
   if(name!=="intro"){ clearInterval(introTimer); introTimer=null; }
   overlayHideAnswer = (name==="question");
   document.body.classList.toggle("in-game", name!=="lobby");
+  document.body.classList.toggle("in-lobby", name==="lobby");
   if(name==="lobby"){ const m=$("#endModal"); if(m) m.hidden=true; }
   ["lobby","intro","question","scan","result","rank","board"].forEach(p => { const el=$("#phase-"+p); if(el) el.hidden = p!==name; });
   $("#phaseLabel").textContent = {lobby:"準備中",question:"競賽掃描中",scan:"掃描中",result:"看結果",rank:"排名",intro:"準備",board:"排行榜"}[name]||name;
@@ -1764,6 +1821,18 @@ $("#optAutoNext").onchange = e => setAutoNext(e.target.checked);
 $("#optAutoNext2").onchange = e => setAutoNext(e.target.checked);
 $("#optAutoNext3").onchange = e => setAutoNext(e.target.checked);
 $("#optShowCam").onchange = applyCamVisibility;
+$$(".stepper").forEach(st=>{
+  const inp = st.querySelector("input"), step = +st.dataset.step || 1;
+  st.querySelectorAll("button").forEach((b,i)=>{
+    b.onclick = ()=>{
+      const min=+inp.min, max=+inp.max;
+      const v = Math.max(min, Math.min(max, (parseInt(inp.value,10)||0) + (i===0 ? -step : step)));
+      inp.value = v;
+      inp.dispatchEvent(new Event("input",{bubbles:true}));
+      inp.dispatchEvent(new Event("change",{bubbles:true}));
+    };
+  });
+});
 $("#btnEndGame").onclick = ()=>{ $("#endModal").hidden = false; };
 $("#btnEndCancel").onclick = ()=>{ $("#endModal").hidden = true; };
 $("#btnEndOk").onclick = ()=>{ $("#endModal").hidden = true; $("#btnNewGame").click(); };
