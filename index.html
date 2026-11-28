@@ -209,6 +209,17 @@
   @keyframes rankin{from{opacity:0;transform:translateX(-80px) scale(.85)}to{opacity:1;transform:none}}
   @keyframes r1pulse{50%{transform:scale(1.035)}}
   @keyframes crown{50%{transform:translateY(-4px) rotate(-8deg)}}
+  .rank-list.swap{position:relative}
+  .rank-slot{position:relative;transition:transform 1.25s cubic-bezier(.25,1.12,.35,1),opacity .6s}
+  .rank-list.swap .rank-slot{position:absolute;left:0;right:0;top:0}
+  .rank-slot .rank-row{margin:0;position:relative;transition:box-shadow .4s,background .6s}
+  .rank-slot .rank-row.r1{animation:rankin .7s cubic-bezier(.2,1.3,.4,1) backwards}
+  .rank-slot .rank-row::after{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;opacity:0;transition:opacity .5s;box-shadow:0 0 30px rgba(255,213,79,.7);animation:glowp 1.6s ease-in-out infinite}
+  .rank-slot .rank-row.r1::after{opacity:1}
+  @keyframes glowp{50%{box-shadow:0 0 70px rgba(255,213,79,1)}}
+  .rank-row.rise{box-shadow:0 0 0 3px #7dff8a,0 0 36px rgba(125,255,138,.7)}
+  .rank-row .mv.up,.rank-row .mv.down,.rank-row .mv.new{animation:mvpop .8s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes mvpop{from{transform:scale(2.4);opacity:0}}
   .rank-actions{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:clamp(6px,1.4vh,14px)}
   .cam-box.cam-hidden{position:fixed!important;left:-10000px!important;top:0!important;width:640px!important;opacity:0;pointer-events:none}
   .music-float{z-index:120!important}
@@ -1591,6 +1602,81 @@ function startRankAuto(afterMs){
     else b.textContent = "下一題（" + left + "）";
   },1000);
 }
+function animateNumber(el, from, to, ms){
+  const t0 = performance.now();
+  const tick = now=>{
+    if(phase!=="rank") return;
+    const k = Math.min(1,(now-t0)/ms), e = 1-Math.pow(1-k,3);
+    el.textContent = Math.round(from + (to-from)*e);
+    if(k<1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+// 有前一輪名次時：先顯示「上一輪名次」，再讓名次列滑動交換位置
+function showRankSwap(cur, prev, top){
+  const list = $("#rankList");
+  const STEP = 420, COUNT = 1000;
+  const prevTop = prev.arr.slice(0,5);
+  const seats = prevTop.map(r=>r.seat);
+  top.forEach(r=>{ if(!seats.includes(r.seat)) seats.push(r.seat); });
+  const prevPos = s=>{ const i=prevTop.findIndex(r=>r.seat===s); return i<0?5:i; };
+  const newPos  = s=>{ const i=top.findIndex(r=>r.seat===s); return i<0?5:i; };
+  const beforeOf = s=>(prevSnap[s]||{score:0}).score;
+  const medal = i=>`<span class="medal m${i+1}">${i+1}</span>`;
+  const cls = i=> i<3 ? "r"+(i+1) : "";
+  rankAnimIds.forEach(clearTimeout); rankAnimIds = [];
+
+  list.innerHTML = seats.map(s=>{
+    const pp = prevPos(s), inPrev = pp<5;
+    const delay = (prevTop.length-1-pp)*STEP;
+    return `<div class="rank-slot" data-seat="${s}"><div class="rank-row ${inPrev?cls(pp):""}" style="${inPrev?`animation-delay:${delay}ms`:"animation:none"}">
+      <span class="rk">${inPrev?medal(pp):""}</span><span class="nm">${seatLabel(s)}</span>
+      <span class="mv"></span><span class="gain"></span><span class="pt">${beforeOf(s)}</span></div></div>`;
+  }).join("");
+
+  // 量測列高，改成絕對定位的「位置格」
+  const slots = $$(".rank-slot", list);
+  const gap = Math.min(14, Math.max(6, Math.round(window.innerHeight*0.012)));
+  const step = slots[0].offsetHeight + gap;
+  slots.forEach(sl=>{
+    const pp = prevPos(+sl.dataset.seat);
+    sl.style.transform = `translateY(${pp*step}px)`;
+    sl.style.opacity = pp<5 ? 1 : 0;
+  });
+  list.style.height = (Math.max(top.length, prevTop.length)*step - gap) + "px";
+  list.classList.add("swap");
+  void list.offsetWidth;
+
+  const moveAt = (prevTop.length-1)*STEP + 700 + 900;
+  const leaderChanged = top[0].seat !== (prevTop[0] && prevTop[0].seat);
+  rankAnimIds.push(setTimeout(()=>{
+    if(phase!=="rank") return;
+    slots.forEach(sl=>{
+      const s = +sl.dataset.seat, pp = prevPos(s), np = newPos(s);
+      const row = sl.firstElementChild;
+      sl.style.transform = `translateY(${np*step}px)`;
+      sl.style.opacity = np<5 ? 1 : 0;
+      sl.style.zIndex = pp>np ? 5 : 1;
+      row.style.animation = "none";
+      row.className = "rank-row " + (np<5?cls(np):"") + (pp>np ? " rise" : "");
+      if(np<5){
+        row.querySelector(".rk").innerHTML = medal(np);
+        const gain = cur.arr.length ? scores[s].score - beforeOf(s) : 0;
+        row.querySelector(".gain").textContent = gain>0 ? "+"+gain : "";
+        const pr = prev.pos[s], nr = np+1, mv = row.querySelector(".mv");
+        if(!pr){ mv.className="mv new"; mv.textContent="NEW"; }
+        else if(pr>nr){ mv.className="mv up"; mv.textContent="▲"+(pr-nr); }
+        else if(pr<nr){ mv.className="mv down"; mv.textContent="▼"+(nr-pr); }
+        else { mv.className="mv same"; mv.textContent="－"; }
+        animateNumber(row.querySelector(".pt"), beforeOf(s), scores[s].score, COUNT);
+      }
+    });
+    rankAnimIds.push(setTimeout(()=>{ $$(".rank-row.rise", list).forEach(r=>r.classList.remove("rise")); }, 2200));
+    rankAnimIds.push(setTimeout(()=>{ if(phase==="rank") burstConfetti(leaderChanged ? 100 : 28); }, 1100));
+  }, moveAt));
+  startRankAuto(moveAt + 1250 + 600);
+}
+
 function showRank(final=false){
   setPhase("rank");
   rankFinal = final;
@@ -1603,6 +1689,7 @@ function showRank(final=false){
   clearRankFx();
   $("#rankSub").textContent = final ? `全部 ${QUESTIONS.length} 題結束` : `第 ${qIndex+1} / ${QUESTIONS.length} 題結束`;
   const list = $("#rankList");
+  list.classList.remove("swap"); list.style.height = "";
   const medal = i => `<span class="medal m${i+1}">${i+1}</span>`;
   const STEP = 520, COUNT = 900;
   if(!top.length){
@@ -1610,6 +1697,7 @@ function showRank(final=false){
     if(final) $("#btnRankNext").textContent = "新的一局"; else startRankAuto(0);
     return;
   }
+  if(!final && prev.arr.length>0){ showRankSwap(cur, prev, top); return; }
   list.innerHTML = top.map((r,i)=>{
     const before = final ? 0 : (prevSnap[r.seat]||{score:0}).score;
     const gain = r.score - before;
