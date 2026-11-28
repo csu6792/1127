@@ -186,6 +186,12 @@
   .rank-inner{position:relative;width:min(920px,100%);max-height:100%;display:flex;flex-direction:column;align-items:center;overflow-y:auto;overflow-x:hidden;padding:10px 14px}
   .rank-kicker{font-weight:900;letter-spacing:.2em;color:#ffe066;font-size:clamp(13px,2.2vw,20px);animation:kick .6s .1s backwards}
   @keyframes kick{from{opacity:0;transform:translateY(-14px)}}
+  .howto{counter-reset:h;list-style:none;padding:0;margin:0 0 16px}
+  .howto li{counter-increment:h;display:flex;flex-direction:column;gap:2px;position:relative;padding:12px 14px 12px 58px;margin-bottom:10px;border-radius:16px;background:rgba(255,255,255,.08);line-height:1.5}
+  .howto li::before{content:counter(h);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:linear-gradient(145deg,#ffd54f,#f57c00);color:#2b1a00}
+  .howto li b{font-size:17px}
+  .howto li span{opacity:.85;font-weight:600}
+  .howto-tips{line-height:1.8;padding-left:22px}
   .rank-title{margin:2px 0 clamp(8px,2vh,24px);font-size:clamp(26px,min(7vw,10vh),72px);line-height:1.1;text-align:center;background:linear-gradient(90deg,#fff,#ffe066,#fff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:titlepop .9s cubic-bezier(.2,1.5,.4,1) backwards,shine 3.5s linear infinite}
   @keyframes titlepop{from{opacity:0;transform:scale(.4) rotate(-6deg)}}
   @keyframes shine{to{background-position:-200% 0}}
@@ -518,12 +524,23 @@
   </section>
 
   <section class="panel" id="tab-help">
-    <h2>對應規則</h2>
-    <ul style="line-height:1.8">
-      <li><b>ArUco ID</b> → 座號</li>
-      <li><b>標記旋轉角</b>（角點算出）→ A/B/C/D</li>
+    <h2>玩法說明</h2>
+    <ol class="howto">
+      <li><b>領取座號卡</b><span>每位同學一張專屬座號卡，上面的號碼就是自己的座號。</span></li>
+      <li><b>先讀題</b><span>題目出現後會先讀題幾秒，這時還看不到選項，也不會收答案。</span></li>
+      <li><b>選項出現，開始倒數</b><span>A、B、C、D 四個選項出現後，答題倒數才開始。</span></li>
+      <li><b>轉卡舉牌</b><span>把想選的字母轉到卡片的最上方，面向鏡頭舉起來：上 A、左 B、下 C、右 D。從 A 開始，每順時針轉 90°，就換成下一個選項。</span></li>
+      <li><b>越快越高分</b><span>答對得 500 分，再加最高 500 分的速度分，越早答對越高；答錯或沒作答 0 分。</span></li>
+      <li><b>答案以最後一次為準</b><span>被確認後想換答案可以重新轉牌，但最後確認的選項才算數。</span></li>
+      <li><b>公布答案與排名</b><span>每題結束先公布正確答案，接著顯示目前前 5 名，再進入下一題。</span></li>
+      <li><b>最終排名</b><span>全部題目結束後，顯示最終前 5 名。</span></li>
+    </ol>
+    <h3>舉牌小技巧</h3>
+    <ul class="howto-tips">
+      <li>卡片舉穩、舉高，面向鏡頭，不要被手指或頭擋住。</li>
+      <li>不要傾斜太多，也避免卡片反光。</li>
+      <li>看到自己的座號格亮起綠色打勾，就代表已經作答成功。</li>
     </ul>
-    <p class="muted">使用 OpenCV.js ArUco 模組與 DICT_5X5_100 字典。Marker 卡片也由同一套 OpenCV 字典產生；請重新列印新版卡片，舊版 js-aruco 卡片不保證相容。</p>
   </section>
 </div>
 
@@ -567,11 +584,12 @@
   <div id="rankFx"></div>
   <div class="rank-inner">
     <div class="rank-kicker" id="rankSub"></div>
-    <h2 class="rank-title"><span class="rt-ic"><svg class="ic"><use href="#i-trophy"/></svg></span>目前排名</h2>
+    <h2 class="rank-title"><span class="rt-ic"><svg class="ic"><use href="#i-trophy"/></svg></span><span id="rankTitleText">目前排名</span></h2>
     <div class="rank-list" id="rankList"></div>
     <div class="rank-actions">
       <button type="button" class="primary" id="btnRankNext">下一題</button>
-      <label><input type="checkbox" id="optAutoNext3" checked> 自動下一題</label>
+      <button type="button" id="btnRankBoard" hidden>完整成績</button>
+      <label id="rankAutoLabel"><input type="checkbox" id="optAutoNext3" checked> 自動下一題</label>
     </div>
   </div>
 </div>
@@ -654,7 +672,7 @@ function setQuestionImage(url){
 }
 
 let scores = {}, roundData = {}, qIndex = 0, phase = "lobby";
-let introTimer = null, readTimerId = null, answering = false, autoNextTimer = null, rankTimer = null, prevSnap = {}, rankAnimIds = [], livePrev = new Set(), overlayHideAnswer = false;
+let rankFinal = false, introTimer = null, readTimerId = null, answering = false, autoNextTimer = null, rankTimer = null, prevSnap = {}, rankAnimIds = [], livePrev = new Set(), overlayHideAnswer = false;
 let timerId = null, remain = 15, seatMax = 50, camStream = null, detectLoop = null, detector = null;
 let cvReady = false, cvDictionary = null, cvInitError = "", cvDetectorKind = "";
 let questionStartedAt = 0, questionDurationSec = 15;
@@ -1221,7 +1239,7 @@ function applyCamVisibility(){
   box.classList.toggle("cam-hidden", !$("#optShowCam").checked);
 }
 function showQuestion(){
-  const item=QUESTIONS[qIndex]; if(!item){ showBoard(true); return; }
+  const item=QUESTIONS[qIndex]; if(!item){ showRank(true); return; }
   clearInterval(readTimerId); clearInterval(timerId);
   roundData = {}; answering = false; livePrev = new Set();
   updateScanLive(); updateDetectCount(); renderProgress(); setPhase("question");
@@ -1341,10 +1359,15 @@ $("#btnResetScores").onclick=()=>{ scores={}; ensureScores(); alert("分數已�
 $("#btnFinishEarly").onclick=()=>{ if(!answering){ revealOptions(); return; } clearInterval(timerId); gradeRound(); };
 $("#btnClearScan").onclick=()=>{ roundData={}; updateScanLive(); updateDetectCount(); };
 $("#btnSimAdd").onclick=()=>registerAnswer($("#simSeat").value, $("#simAns").value, true);
-$("#btnNext").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else showRank(); };
-$("#btnRankNext").onclick=()=>{ cancelRankAuto(); qIndex++; showQuestion(); };
+$("#btnNext").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showRank(true); else showRank(false); };
+$("#btnRankNext").onclick=()=>{
+  cancelRankAuto();
+  if(rankFinal){ $("#btnNewGame").click(); return; }
+  qIndex++; showQuestion();
+};
+$("#btnRankBoard").onclick=()=>{ cancelRankAuto(); showBoard(true); };
 $("#btnShowBoard").onclick=()=>showBoard(false);
-$("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showBoard(true); else { qIndex++; showQuestion(); } };
+$("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showRank(true); else { qIndex++; showQuestion(); } };
 $("#btnNewGame").onclick=()=>{ clearInterval(readTimerId); clearInterval(timerId); answering=false; stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
 $("#btnExport").onclick=()=>{
   const rows=[["排名","座號","姓名","分數","答對題數"]];
@@ -1568,33 +1591,39 @@ function startRankAuto(afterMs){
     else b.textContent = "下一題（" + left + "）";
   },1000);
 }
-function showRank(){
+function showRank(final=false){
   setPhase("rank");
+  rankFinal = final;
+  $("#rankTitleText").textContent = final ? "最終排名" : "目前排名";
+  $("#btnRankBoard").hidden = !final;
+  $("#rankAutoLabel").style.display = final ? "none" : "";
   const cur = rankOrder(seat => scores[seat]);
   const prev = rankOrder(seat => prevSnap[seat] || {score:0,correct:0});
   const top = cur.arr.slice(0,5);
   clearRankFx();
-  $("#rankSub").textContent = `第 ${qIndex+1} / ${QUESTIONS.length} 題結束`;
+  $("#rankSub").textContent = final ? `全部 ${QUESTIONS.length} 題結束` : `第 ${qIndex+1} / ${QUESTIONS.length} 題結束`;
   const list = $("#rankList");
   const medal = i => `<span class="medal m${i+1}">${i+1}</span>`;
   const STEP = 520, COUNT = 900;
   if(!top.length){
     list.innerHTML = '<div class="muted" style="text-align:center">還沒有人得分</div>';
-    startRankAuto(0); return;
+    if(final) $("#btnRankNext").textContent = "新的一局"; else startRankAuto(0);
+    return;
   }
   list.innerHTML = top.map((r,i)=>{
-    const before = (prevSnap[r.seat]||{score:0}).score;
+    const before = final ? 0 : (prevSnap[r.seat]||{score:0}).score;
     const gain = r.score - before;
     const pr = prev.pos[r.seat], nr = i+1;
-    let mv;
-    if(!pr) mv = '<span class="mv new">NEW</span>';
+    let mv = "";
+    if(final){}
+    else if(!pr) mv = '<span class="mv new">NEW</span>';
     else if(pr>nr) mv = `<span class="mv up">▲${pr-nr}</span>`;
     else if(pr<nr) mv = `<span class="mv down">▼${nr-pr}</span>`;
     else mv = '<span class="mv same">－</span>';
     const delay = (top.length-1-i)*STEP;   // 由第 5 名先出現，最後揭曉第 1 名
     return `<div class="rank-row ${i<3?"r"+(i+1):""}" style="animation-delay:${delay}ms">
       <span class="rk">${medal(i)}</span><span class="nm">${seatLabel(r.seat)}</span>
-      ${mv}<span class="gain">${gain>0?"+"+gain:""}</span><span class="pt" data-from="${before}" data-to="${r.score}" data-delay="${delay}">${before}</span></div>`;
+      ${final ? "" : mv + `<span class="gain">${gain>0?"+"+gain:""}</span>`}<span class="pt" data-from="${before}" data-to="${r.score}" data-delay="${delay}">${before}</span></div>`;
   }).join("");
   rankAnimIds.forEach(clearTimeout); rankAnimIds = [];
   $$(".pt", list).forEach(el=>{
@@ -1610,8 +1639,14 @@ function showRank(){
       requestAnimationFrame(tick);
     }, delay + 250));
   });
-  rankAnimIds.push(setTimeout(()=>{ if(phase==="rank") burstConfetti(70); }, (top.length-1)*STEP + 350));
-  startRankAuto((top.length-1)*STEP + COUNT + 400);
+  const revealAt = (top.length-1)*STEP + 350;
+  rankAnimIds.push(setTimeout(()=>{ if(phase==="rank") burstConfetti(final ? 130 : 70); }, revealAt));
+  if(final){
+    [2200, 4600, 7000].forEach(t=>rankAnimIds.push(setTimeout(()=>{ if(phase==="rank") burstConfetti(60); }, revealAt + t)));
+    $("#btnRankNext").textContent = "新的一局";
+  }else{
+    startRankAuto((top.length-1)*STEP + COUNT + 400);
+  }
 }
 
 function nextBtnBase(){ return "下一題"; }
