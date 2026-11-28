@@ -562,7 +562,7 @@
         <label class="tog"><input type="checkbox" id="optAutoNext" checked><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-skip"/></svg> 自動下一題</span><small>公布答案 5 秒後自動前進</small></span></label>
         <label class="tog"><input type="checkbox" id="optShowCam"><i class="sw"></i><span class="tt"><span><svg class="ic"><use href="#i-camera"/></svg> 顯示鏡頭畫面</span><small>除錯用，正式上課不用開</small></span></label>
       </div>
-      <div class="vol-row"><svg class="ic"><use href="#i-vol"/></svg><input type="range" id="musicVol" min="0" max="100" value="40"><span class="muted" id="musicStatus">音樂檔：bgm.mp3（放在這個 html 旁邊）</span></div>
+      <div class="vol-row"><svg class="ic"><use href="#i-vol"/></svg><input type="range" id="musicVol" min="0" max="100" value="40"><span class="muted" id="musicStatus">音樂檔：bgm.mp3　／　開始音：start.mp3（皆放在 html 旁邊）</span></div>
 
       <button type="button" class="start-btn" id="btnStart">開始一局</button>
       <div style="text-align:center"><button type="button" class="link-btn" id="btnResetScores">清空分數</button></div>
@@ -1557,7 +1557,7 @@ function showBoard(final=false){
   $("#boardBody").innerHTML=rows.map((r,i)=>`<tr class="${i<3?"rank-"+(i+1):""}"><td>${i+1}</td><td>${r.seat}</td><td>${nameOf(r.seat) ? esc(nameOf(r.seat)) : "—"}</td><td>${r.score}</td><td>${r.correct}</td></tr>`).join("");
 }
 
-$("#btnStart").onclick=()=>{ ensureScores(); qIndex=0; showIntro(); };
+$("#btnStart").onclick=()=>{ scores={}; ensureScores(); qIndex=0; showIntro(); };
 $("#btnResetScores").onclick=()=>{ scores={}; ensureScores(); alert("分數已清空"); };
 $("#btnFinishEarly").onclick=()=>{ if(!answering){ revealOptions(); return; } clearInterval(timerId); gradeRound(); };
 $("#btnClearScan").onclick=()=>{ roundData={}; updateScanLive(); updateDetectCount(); };
@@ -1571,7 +1571,7 @@ $("#btnRankNext").onclick=()=>{
 $("#btnRankBoard").onclick=()=>{ cancelRankAuto(); showBoard(true); };
 $("#btnShowBoard").onclick=()=>showBoard(false);
 $("#btnContinue").onclick=()=>{ if(qIndex>=QUESTIONS.length-1) showRank(true); else { qIndex++; showQuestion(); } };
-$("#btnNewGame").onclick=()=>{ clearInterval(readTimerId); clearInterval(timerId); answering=false; stopCamera(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
+$("#btnNewGame").onclick=()=>{ clearInterval(readTimerId); clearInterval(timerId); answering=false; stopCamera(); scores={}; ensureScores(); setPhase("lobby"); qIndex=0; $("#qProgress").textContent="第 0 / 0 題"; $("#qBar").style.width="0%"; };
 $("#btnExport").onclick=()=>{
   const rows=[["排名","座號","姓名","分數","答對題數"]];
   Object.keys(scores).map(Number).map(seat=>({seat,score:scores[seat].score,correct:scores[seat].correct}))
@@ -1668,7 +1668,10 @@ try{ const saved = JSON.parse(localStorage.getItem("classroomRoster")||"null"); 
 // ===== 背景音樂 & 自動下一題 =====
 const bgm = new Audio(); bgm.loop = true; bgm.preload = "auto"; bgm.volume = 0.4;
 const MUSIC_FILE = "bgm.mp3";
-let musicOn = true, autoNext = true, musicLoaded = true;
+const START_MUSIC_FILE = "start.mp3"; // 競賽開始音效（放在 html 旁邊）
+const startSfx = new Audio(); startSfx.preload = "auto"; startSfx.volume = 0.7;
+startSfx.src = START_MUSIC_FILE;
+let musicOn = true, autoNext = true, musicLoaded = true, startSfxLoaded = true;
 bgm.src = MUSIC_FILE;
 try{
   const o = JSON.parse(localStorage.getItem("classroomOpts")||"null");
@@ -1686,6 +1689,15 @@ function playMusic(){
   const r = bgm.play();
   if(r && r.catch) r.catch(()=> setMusicStatus("瀏覽器擋住自動播放，請點一下右下角的音樂按鈕開始"));
 }
+/** 競賽真正開始時播放（倒數結束進入第一題） */
+function playStartMusic(){
+  if(!musicOn || !startSfxLoaded) return;
+  try{
+    startSfx.currentTime = 0;
+    const r = startSfx.play();
+    if(r && r.catch) r.catch(()=>{});
+  }catch(e){}
+}
 function setMusic(on){
   musicOn = on; syncOptUI(); saveOpts();
   if(on){ if(!musicLoaded) setMusicStatus("找不到 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); else playMusic(); } else bgm.pause();
@@ -1694,7 +1706,9 @@ $("#optMusic").onchange = e => setMusic(e.target.checked);
 $("#btnMusicFloat").onclick = () => setMusic(!musicOn);
 $("#musicVol").oninput = e => { bgm.volume = (+e.target.value)/100; saveOpts(); };
 bgm.onerror = () => { musicLoaded = false; setMusicStatus("找不到或無法播放 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); };
-bgm.oncanplay = () => { musicLoaded = true; setMusicStatus("音樂檔：" + MUSIC_FILE); };
+bgm.oncanplay = () => { musicLoaded = true; setMusicStatus("音樂檔：" + MUSIC_FILE + "　／　開始音：" + START_MUSIC_FILE); };
+startSfx.onerror = () => { startSfxLoaded = false; };
+startSfx.oncanplay = () => { startSfxLoaded = true; };
 $("#btnStart").addEventListener("click", playMusic);
 $("#btnNewGame").addEventListener("click", ()=>{ cancelRankAuto(); });
 // 進入網頁就嘗試播放；若被瀏覽器擋住，第一次點擊/觸碰/按鍵時自動開始
@@ -1754,7 +1768,12 @@ function startCountdown(){
   introTimer=setInterval(()=>{
     n--;
     if(n>0) setCountNum(n);
-    else{ clearInterval(introTimer); introTimer=null; qIndex=0; showQuestion(); }
+    else{
+      clearInterval(introTimer); introTimer=null;
+      qIndex=0;
+      playStartMusic(); // 競賽開始音效
+      showQuestion();
+    }
   },1000);
 }
 $("#btnIntroGo").onclick=()=>{ playMusic(); startCountdown(); };
