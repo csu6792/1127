@@ -172,8 +172,9 @@
   .top5-row.r1{background:rgba(255,213,79,.28)}.top5-row.r2{background:rgba(224,230,239,.2)}.top5-row.r3{background:rgba(255,171,123,.2)}
   .music-float{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:48px;height:48px;border-radius:50%;font-size:22px;padding:0;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.4)}
   @media print{.music-float{display:none!important}}
-  #phase-rank{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));animation:rankfade .5s ease-out}
-  #phase-rank[hidden]{display:none}
+  #phase-rank,#phase-intro{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));animation:rankfade .5s ease-out}
+  #phase-rank[hidden],#phase-intro[hidden]{display:none}
+  #introReady[hidden],#introCount[hidden]{display:none}
   @keyframes rankfade{from{opacity:0}to{opacity:1}}
   .rank-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 18%,#6a35e8 0%,#2a0f63 48%,#0b0522 100%)}
   .rank-bg::before{content:"";position:absolute;left:50%;top:18%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;background:repeating-conic-gradient(from 0deg,rgba(255,213,79,.14) 0deg 8deg,rgba(255,213,79,0) 8deg 24deg);animation:raysspin 40s linear infinite}
@@ -205,6 +206,45 @@
   .rank-actions{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:clamp(6px,1.4vh,14px)}
   .cam-box.cam-hidden{position:fixed!important;left:-10000px!important;top:0!important;width:640px!important;opacity:0;pointer-events:none}
   .music-float{z-index:120!important}
+  .ic{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .medal{display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1.5em;border-radius:50%;font-size:.78em;font-weight:900;color:#2b1a00;background:linear-gradient(145deg,var(--m1,#7e57c2),var(--m2,#4527a0));box-shadow:inset 0 -3px 0 rgba(0,0,0,.22),0 2px 6px rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.55)}
+  .medal.m1{--m1:#ffe27a;--m2:#f5a300}.medal.m2{--m1:#f2f5fa;--m2:#a8b3c4}.medal.m3{--m1:#ffc29a;--m2:#c9702f}
+  .medal.m4,.medal.m5{color:#fff}
+  .rt-ic{display:inline-block;color:#ffd54f;-webkit-text-fill-color:#ffd54f;vertical-align:-.08em;margin-right:.12em;filter:drop-shadow(0 0 12px rgba(255,213,79,.7))}
+  .intro-inner{position:relative;width:min(820px,100%);text-align:center;max-height:100%;overflow-y:auto;overflow-x:hidden;padding:10px 14px}
+  .intro-badge{display:inline-block;animation:kick .6s .1s backwards}
+  .intro-title{font-size:clamp(38px,min(10vw,14vh),104px)!important;margin:10px 0 clamp(10px,2.4vh,26px)!important}
+  .intro-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:clamp(14px,3vh,34px)}
+  .intro-chips span .ic{margin-right:.35em}
+  .intro-chips span{background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 18px;font-weight:900;font-size:clamp(14px,2.4vw,22px);animation:rankin .6s backwards}
+  .intro-chips span:nth-child(2){animation-delay:.12s}.intro-chips span:nth-child(3){animation-delay:.24s}
+  .intro-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin-bottom:clamp(18px,4.5vh,48px)}
+  .intro-steps div{background:rgba(0,0,0,.28);border-radius:18px;padding:12px 16px;min-width:92px;animation:rankin .6s calc(.35s + var(--i)*.15s) cubic-bezier(.2,1.3,.4,1) backwards}
+  .intro-steps em{display:grid;place-items:center;width:clamp(48px,8vw,72px);height:clamp(48px,8vw,72px);margin:0 auto 8px;border-radius:20px;font-style:normal;color:#fff;font-size:clamp(26px,4.4vw,38px);background:linear-gradient(145deg,var(--g1),var(--g2));box-shadow:0 5px 0 rgba(0,0,0,.28)}
+  .intro-steps b{font-size:clamp(13px,2vw,18px)}
+  .intro-steps i{font-style:normal;font-size:28px;opacity:.6}
+  .intro-go{font-size:clamp(24px,5vw,44px);font-weight:900;color:#fff;border:none;border-radius:999px;padding:clamp(14px,2.4vh,24px) clamp(44px,9vw,96px);cursor:pointer;background:linear-gradient(180deg,#ff6b6b,#e0194a);box-shadow:0 8px 0 #8a0f30,0 0 40px rgba(255,64,100,.65);animation:gopulse 1.4s ease-in-out infinite,rankin .7s .9s backwards}
+  .intro-go:active{transform:translateY(5px);box-shadow:0 3px 0 #8a0f30}
+  @keyframes gopulse{50%{transform:scale(1.07);box-shadow:0 8px 0 #8a0f30,0 0 64px rgba(255,64,100,.95)}}
+  .intro-back{margin-top:18px;background:transparent;border:none;color:#fff;opacity:.7;font-size:16px;cursor:pointer;text-decoration:underline}
+  .intro-floats{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .intro-floats span{position:absolute;bottom:-80px;width:var(--sz,30px);height:var(--sz,30px);opacity:0;animation:floatup var(--dur,9s) linear var(--dl,0s) infinite}
+  .intro-floats .fc{border:4px solid var(--c);border-radius:50%}
+  .intro-floats .fd{background:var(--c);border-radius:50%}
+  .intro-floats .fs{border:4px solid var(--c);border-radius:7px}
+  .intro-floats .ft{background:var(--c);clip-path:polygon(50% 6%,100% 94%,0 94%)}
+  .intro-floats .fp{background:linear-gradient(var(--c),var(--c)) center/100% 24% no-repeat,linear-gradient(var(--c),var(--c)) center/24% 100% no-repeat}
+  @keyframes floatup{0%{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.45}90%{opacity:.45}100%{transform:translateY(-115vh) rotate(var(--rot,200deg));opacity:0}}
+  .ic-label{font-weight:900;letter-spacing:.3em;color:#ffe066;font-size:clamp(18px,3.4vw,34px);animation:kick .6s backwards}
+  .ic-stage{position:relative;display:flex;align-items:center;justify-content:center;height:clamp(220px,52vmin,520px)}
+  .ic-num{position:relative;z-index:2;font-weight:900;line-height:1;font-size:clamp(150px,44vmin,440px);color:#fff;text-shadow:0 0 50px rgba(255,255,255,.55),0 10px 0 rgba(0,0,0,.25)}
+  .ic-num.tick{animation:numpop 1s cubic-bezier(.2,1.4,.4,1) both}
+  .ic-num[data-n="3"]{color:#ffd54f}.ic-num[data-n="2"]{color:#ff9800}.ic-num[data-n="1"]{color:#ff5252}
+  @keyframes numpop{0%{transform:scale(2.6);opacity:0}22%{transform:scale(1);opacity:1}78%{transform:scale(1);opacity:1}100%{transform:scale(.55);opacity:0}}
+  .ic-ring{position:absolute;left:50%;top:50%;width:clamp(180px,46vmin,440px);height:clamp(180px,46vmin,440px);margin:calc(clamp(180px,46vmin,440px)/-2) 0 0 calc(clamp(180px,46vmin,440px)/-2);border:6px solid rgba(255,255,255,.55);border-radius:50%;animation:ringout 1s ease-out infinite}
+  .ic-ring.r2{animation-delay:.5s}
+  @keyframes ringout{from{transform:scale(.5);opacity:.9}to{transform:scale(1.9);opacity:0}}
+  .ic-hint{font-weight:900;font-size:clamp(16px,2.6vw,26px);opacity:.85}
   body.in-game .game-chrome{display:none!important}
   body.in-game .wrap{padding-top:62px}
   .end-game{display:none;position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:130;padding:8px 16px;font-size:15px;border-radius:999px;background:rgba(20,8,48,.78);color:#fff;border:2px solid rgba(255,255,255,.4);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
@@ -297,6 +337,20 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+<symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+<symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6m0-6 6 6"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.5a5.5 5.5 0 0 1 5 5.5"/></symbol>
+</defs></svg>
 <div class="wrap">
   <div class="kahoot-banner game-chrome">CLASSROOM RACE</div>
   <h1 class="game-chrome">教室紙卡答題</h1>
@@ -325,9 +379,9 @@
         <label>讀題秒數 <input type="number" id="readSeconds" value="5" min="0" max="30" style="width:70px"></label>
       </div>
       <div class="row" style="margin:8px 0">
-        <label><input type="checkbox" id="optMusic" checked> 🎵 背景音樂</label>
-        <label><input type="checkbox" id="optAutoNext" checked> ⏭ 公布答案 5 秒後自動下一題</label>
-        <label><input type="checkbox" id="optShowCam"> 📷 競賽中顯示鏡頭畫面（除錯用）</label>
+        <label><input type="checkbox" id="optMusic" checked> <svg class="ic"><use href="#i-music"/></svg> 背景音樂</label>
+        <label><input type="checkbox" id="optAutoNext" checked> <svg class="ic"><use href="#i-skip"/></svg> 公布答案 5 秒後自動下一題</label>
+        <label><input type="checkbox" id="optShowCam"> <svg class="ic"><use href="#i-camera"/></svg> 競賽中顯示鏡頭畫面（除錯用）</label>
       </div>
       <div class="row" style="margin:8px 0">
         <label>音量 <input type="range" id="musicVol" min="0" max="100" value="40" style="width:110px"></label>
@@ -400,7 +454,7 @@
     </div>
 
     <div id="phase-board" hidden>
-      <h2>🏆 座號排行榜</h2>
+      <h2><svg class="ic"><use href="#i-trophy"/></svg> 座號排行榜</h2>
       <table>
         <thead><tr><th>#</th><th>座號</th><th>姓名</th><th>分數</th><th>答對</th></tr></thead>
         <tbody id="boardBody"></tbody>
@@ -484,12 +538,36 @@
     </div>
   </div>
 </div>
+<div id="phase-intro" hidden>
+  <div class="rank-bg"></div>
+  <div class="intro-floats" id="introFloats"></div>
+  <div class="intro-inner">
+    <div id="introReady">
+      <div class="kahoot-banner intro-badge">CLASSROOM RACE</div>
+      <h1 class="rank-title intro-title">教室紙卡答題</h1>
+      <div class="intro-chips"><span id="introQ"></span><span id="introT"></span><span id="introP"></span></div>
+      <div class="intro-steps">
+        <div style="--i:0"><em style="--g1:#4fc3f7;--g2:#1565c0"><svg class="ic"><use href="#i-book"/></svg></em><b>讀題</b></div><i>›</i>
+        <div style="--i:1"><em style="--g1:#ff7aa8;--g2:#d81b60"><svg class="ic"><use href="#i-card"/></svg></em><b>舉牌作答</b></div><i>›</i>
+        <div style="--i:2"><em style="--g1:#ffd54f;--g2:#f57c00"><svg class="ic"><use href="#i-bolt"/></svg></em><b>越快越高分</b></div><i>›</i>
+        <div style="--i:3"><em style="--g1:#69f0ae;--g2:#00897b"><svg class="ic"><use href="#i-trophy"/></svg></em><b>看排名</b></div>
+      </div>
+      <button type="button" class="intro-go" id="btnIntroGo">開始遊戲</button>
+      <div><button type="button" class="intro-back" id="btnIntroBack">‹ 返回設定</button></div>
+    </div>
+    <div id="introCount" hidden>
+      <div class="ic-label">準備開始</div>
+      <div class="ic-stage"><i class="ic-ring"></i><i class="ic-ring r2"></i><div class="ic-num" id="icNum">5</div></div>
+      <div class="ic-hint">請把紙卡準備好</div>
+    </div>
+  </div>
+</div>
 <div id="phase-rank" hidden>
   <div class="rank-bg"></div>
   <div id="rankFx"></div>
   <div class="rank-inner">
     <div class="rank-kicker" id="rankSub"></div>
-    <h2 class="rank-title">🏆 目前排名</h2>
+    <h2 class="rank-title"><span class="rt-ic"><svg class="ic"><use href="#i-trophy"/></svg></span>目前排名</h2>
     <div class="rank-list" id="rankList"></div>
     <div class="rank-actions">
       <button type="button" class="primary" id="btnRankNext">下一題</button>
@@ -497,7 +575,7 @@
     </div>
   </div>
 </div>
-<button type="button" class="music-float" id="btnMusicFloat" title="開關背景音樂">🔊</button>
+<button type="button" class="music-float" id="btnMusicFloat" title="開關背景音樂"><svg class="ic"><use href="#i-vol"/></svg></button>
 <script async src="https://docs.opencv.org/5.x/opencv.js"></script>
 <script>
 const DEFAULT_QUESTIONS = [
@@ -576,7 +654,7 @@ function setQuestionImage(url){
 }
 
 let scores = {}, roundData = {}, qIndex = 0, phase = "lobby";
-let readTimerId = null, answering = false, autoNextTimer = null, rankTimer = null, prevSnap = {}, rankAnimIds = [], livePrev = new Set(), overlayHideAnswer = false;
+let introTimer = null, readTimerId = null, answering = false, autoNextTimer = null, rankTimer = null, prevSnap = {}, rankAnimIds = [], livePrev = new Set(), overlayHideAnswer = false;
 let timerId = null, remain = 15, seatMax = 50, camStream = null, detectLoop = null, detector = null;
 let cvReady = false, cvDictionary = null, cvInitError = "", cvDetectorKind = "";
 let questionStartedAt = 0, questionDurationSec = 15;
@@ -587,6 +665,7 @@ let scanFps = 0, scanFrameCount = 0, scanFpsStartedAt = 0, scanProcessMs = 0;
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
 
+const ico = (n,c="") => `<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 // ===== 學生名單 =====
 let roster = {};
 const esc = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1036,11 +1115,12 @@ function setPhase(name){
   phase = name;
   if(name!=="result") cancelAutoNext();
   if(name!=="rank") cancelRankAuto();
+  if(name!=="intro"){ clearInterval(introTimer); introTimer=null; }
   overlayHideAnswer = (name==="question");
   document.body.classList.toggle("in-game", name!=="lobby");
   if(name==="lobby"){ const m=$("#endModal"); if(m) m.hidden=true; }
-  ["lobby","question","scan","result","rank","board"].forEach(p => { const el=$("#phase-"+p); if(el) el.hidden = p!==name; });
-  $("#phaseLabel").textContent = {lobby:"準備中",question:"競賽掃描中",scan:"掃描中",result:"看結果",rank:"排名",board:"排行榜"}[name]||name;
+  ["lobby","intro","question","scan","result","rank","board"].forEach(p => { const el=$("#phase-"+p); if(el) el.hidden = p!==name; });
+  $("#phaseLabel").textContent = {lobby:"準備中",question:"競賽掃描中",scan:"掃描中",result:"看結果",rank:"排名",intro:"準備",board:"排行榜"}[name]||name;
 }
 function renderProgress(){
   $("#qProgress").textContent = `第 ${qIndex+1} / ${QUESTIONS.length} 題`;
@@ -1162,7 +1242,7 @@ function showQuestion(){
     setShown($("#readingNote"), true);
     $("#btnFinishEarly").textContent = "跳過讀題";
     let left = readSec;
-    const note = ()=>{ $("#readingNote").textContent = `📖 請先讀題… ${left} 秒後顯示選項並開始倒數`; };
+    const note = ()=>{ $("#readingNote").innerHTML = ico("book") + ` 請先讀題… ${left} 秒後顯示選項並開始倒數`; };
     note();
     readTimerId = setInterval(()=>{
       left--;
@@ -1178,11 +1258,11 @@ function showQuestion(){
   applyCamVisibility();
   if(sl) sl.textContent = cvReady ? "" : "OpenCV 載入中…（可先用下方模擬輸入）";
   waitForOpenCV().then(()=>startCamera(video)).catch(err=>{
-    if(sl) sl.textContent="⚠ 無法自動掃描："+(err.message||err)+"（請用下方模擬輸入，或確認網路後重新整理）";
+    if(sl) sl.textContent="無法自動掃描："+(err.message||err)+"（請用下方模擬輸入，或確認網路後重新整理）";
     return false;
   }).then(ok=>{
     if(!ok) return;
-    if(sl) sl.textContent = $("#optShowCam").checked ? "" : "📷 鏡頭掃描中（畫面已隱藏）";
+    if(sl) sl.textContent = $("#optShowCam").checked ? "" : "鏡頭掃描中（畫面已隱藏）";
     let lastScanAt = 0;
     const loop=(now)=>{
       if(phase!=="question"||!camStream) return;
@@ -1256,7 +1336,7 @@ function showBoard(final=false){
   $("#boardBody").innerHTML=rows.map((r,i)=>`<tr class="${i<3?"rank-"+(i+1):""}"><td>${i+1}</td><td>${r.seat}</td><td>${nameOf(r.seat) ? esc(nameOf(r.seat)) : "—"}</td><td>${r.score}</td><td>${r.correct}</td></tr>`).join("");
 }
 
-$("#btnStart").onclick=()=>{ ensureScores(); qIndex=0; showQuestion(); };
+$("#btnStart").onclick=()=>{ ensureScores(); qIndex=0; showIntro(); };
 $("#btnResetScores").onclick=()=>{ scores={}; ensureScores(); alert("分數已清空"); };
 $("#btnFinishEarly").onclick=()=>{ if(!answering){ revealOptions(); return; } clearInterval(timerId); gradeRound(); };
 $("#btnClearScan").onclick=()=>{ roundData={}; updateScanLive(); updateDetectCount(); };
@@ -1372,13 +1452,13 @@ function saveOpts(){ try{ localStorage.setItem("classroomOpts", JSON.stringify({
 function syncOptUI(){
   $("#optMusic").checked = musicOn;
   $("#optAutoNext").checked = autoNext; $("#optAutoNext2").checked = autoNext; $("#optAutoNext3").checked = autoNext;
-  $("#btnMusicFloat").textContent = musicOn ? "🔊" : "🔇";
+  $("#btnMusicFloat").innerHTML = ico(musicOn ? "vol" : "mute");
 }
 function setMusicStatus(t){ $("#musicStatus").textContent = t; }
 function playMusic(){
   if(!musicOn || !musicLoaded) return;
   const r = bgm.play();
-  if(r && r.catch) r.catch(()=> setMusicStatus("瀏覽器擋住自動播放，請點一下 🔊 開始"));
+  if(r && r.catch) r.catch(()=> setMusicStatus("瀏覽器擋住自動播放，請點一下右下角的音樂按鈕開始"));
 }
 function setMusic(on){
   musicOn = on; syncOptUI(); saveOpts();
@@ -1390,7 +1470,19 @@ $("#musicVol").oninput = e => { bgm.volume = (+e.target.value)/100; saveOpts(); 
 bgm.onerror = () => { musicLoaded = false; setMusicStatus("找不到或無法播放 " + MUSIC_FILE + "，請把它放在 html 旁邊後重新整理"); };
 bgm.oncanplay = () => { musicLoaded = true; setMusicStatus("音樂檔：" + MUSIC_FILE); };
 $("#btnStart").addEventListener("click", playMusic);
-$("#btnNewGame").addEventListener("click", ()=>{ bgm.pause(); bgm.currentTime = 0; cancelRankAuto(); });
+$("#btnNewGame").addEventListener("click", ()=>{ cancelRankAuto(); });
+// 進入網頁就嘗試播放；若被瀏覽器擋住，第一次點擊/觸碰/按鍵時自動開始
+{
+  const unlock = () => {
+    ["pointerdown","keydown","touchstart"].forEach(ev=>document.removeEventListener(ev, unlock, true));
+    playMusic();
+  };
+  ["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev, unlock, true));
+  if(musicOn){
+    const r = bgm.play();
+    if(r && r.catch) r.catch(()=>{ /* 等待第一次互動 */ });
+  }
+}
 
 function rankOrder(getter){
   const arr = Object.keys(scores).map(Number).map(seat=>{ const v=getter(seat); return { seat, score:v.score, correct:v.correct }; })
@@ -1399,6 +1491,49 @@ function rankOrder(getter){
   const pos = {}; arr.forEach((r,i)=>{ pos[r.seat]=i+1; });
   return { arr, pos };
 }
+function spawnIntroFloats(){
+  const box=$("#introFloats"); if(!box) return;
+  box.innerHTML="";
+  const kinds=["fc","fd","fs","ft","fp"], colors=["#ffd54f","#ff5c8a","#4dd0e1","#69f0ae","#b388ff","#ffffff"];
+  for(let i=0;i<20;i++){
+    const e=document.createElement("span");
+    e.className=kinds[i%kinds.length];
+    e.style.left=(Math.random()*96)+"%";
+    e.style.setProperty("--c",colors[(i*2+Math.floor(Math.random()*3))%colors.length]);
+    e.style.setProperty("--sz",(14+Math.random()*34)+"px");
+    e.style.setProperty("--dur",(7+Math.random()*8)+"s");
+    e.style.setProperty("--dl",(-Math.random()*12)+"s");
+    e.style.setProperty("--rot",((Math.random()-.5)*540)+"deg");
+    box.appendChild(e);
+  }
+}
+function showIntro(){
+  setPhase("intro");
+  $("#introReady").hidden=false; $("#introCount").hidden=true;
+  const secs=Math.max(5,+$("#qSeconds").value||15);
+  const rosterIds=Object.keys(roster).map(Number).filter(n=>n>=1&&n<=seatMax);
+  $("#introQ").innerHTML=ico("list")+QUESTIONS.length+" 題";
+  $("#introT").innerHTML=ico("clock")+"每題 "+secs+" 秒";
+  $("#introP").innerHTML=ico("users")+(rosterIds.length||seatMax)+" 位同學";
+  spawnIntroFloats();
+}
+function setCountNum(n){
+  const el=$("#icNum"); el.textContent=n; el.dataset.n=n;
+  el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick");
+}
+function startCountdown(){
+  clearInterval(introTimer);
+  $("#introReady").hidden=true; $("#introCount").hidden=false;
+  let n=5; setCountNum(n);
+  introTimer=setInterval(()=>{
+    n--;
+    if(n>0) setCountNum(n);
+    else{ clearInterval(introTimer); introTimer=null; qIndex=0; showQuestion(); }
+  },1000);
+}
+$("#btnIntroGo").onclick=()=>{ playMusic(); startCountdown(); };
+$("#btnIntroBack").onclick=()=>{ setPhase("lobby"); };
+
 function clearRankFx(){ const fx=$("#rankFx"); if(fx) fx.innerHTML=""; }
 function burstConfetti(n){
   const fx=$("#rankFx"); if(!fx) return;
@@ -1441,7 +1576,7 @@ function showRank(){
   clearRankFx();
   $("#rankSub").textContent = `第 ${qIndex+1} / ${QUESTIONS.length} 題結束`;
   const list = $("#rankList");
-  const medal = ["🥇","🥈","🥉","4","5"];
+  const medal = i => `<span class="medal m${i+1}">${i+1}</span>`;
   const STEP = 520, COUNT = 900;
   if(!top.length){
     list.innerHTML = '<div class="muted" style="text-align:center">還沒有人得分</div>';
@@ -1458,7 +1593,7 @@ function showRank(){
     else mv = '<span class="mv same">－</span>';
     const delay = (top.length-1-i)*STEP;   // 由第 5 名先出現，最後揭曉第 1 名
     return `<div class="rank-row ${i<3?"r"+(i+1):""}" style="animation-delay:${delay}ms">
-      <span class="rk">${medal[i]}</span><span class="nm">${seatLabel(r.seat)}</span>
+      <span class="rk">${medal(i)}</span><span class="nm">${seatLabel(r.seat)}</span>
       ${mv}<span class="gain">${gain>0?"+"+gain:""}</span><span class="pt" data-from="${before}" data-to="${r.score}" data-delay="${delay}">${before}</span></div>`;
   }).join("");
   rankAnimIds.forEach(clearTimeout); rankAnimIds = [];
